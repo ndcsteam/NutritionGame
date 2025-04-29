@@ -1032,10 +1032,10 @@
         
         // 生成隨機病人名稱
         function generatePatientName() {
-            const firstNames = ["小", "大", "胖", "瘦", "高", "矮", "帥", "美", "聰", "乖"];
-            const lastNames = ["明", "華", "雄", "雅", "菁", "峰", "琪", "傑", "芳", "婷"];
+            const surnames = ["陳", "林", "黃", "張", "李", "王", "吳", "劉", "蔡", "楊"];
+            const givenNames = ["英秀", "一心", "幼羚", "家寶", "念慈", "思賢", "有容", "向華", "修端", "允行"];
             
-            return firstNames[Math.floor(Math.random() * firstNames.length)] + lastNames[Math.floor(Math.random() * lastNames.length)];
+            return surnames[Math.floor(Math.random() * surnames.length)] + givenNames[Math.floor(Math.random() * givenNames.length)];
         }
         
         // 提交食物
