@@ -1024,6 +1024,10 @@
             neededFood.classList.add("hidden");
             foodIcons.innerHTML = "";
             resultMessage.classList.add("hidden");
+            
+            // 重新啟用提交按鈕
+            submitFoodBtn.disabled = false;
+            submitFoodBtn.classList.remove("opacity-50", "cursor-not-allowed");
         }
         
         // 生成隨機病人名稱
@@ -1041,30 +1045,34 @@
             const patient = diseases[currentPatientIndex];
             const correctFoods = patient.remedies;
             
-            // 顯示所需食物
-            neededFood.classList.remove("hidden");
-            foodIcons.innerHTML = "";
-            
-            correctFoods.forEach(food => {
-                const foodDiv = document.createElement("div");
-                foodDiv.className = "food-icon-container flex flex-col items-center";
-                
-                const foodEmoji = document.createElement("span");
-                foodEmoji.textContent = foods[food].emoji;
-                foodEmoji.classList.add("text-4xl");
-                
-                const foodName = document.createElement("span");
-                foodName.textContent = foods[food].name;
-                foodName.className = "text-sm font-medium mt-1";
-                
-                foodDiv.appendChild(foodEmoji);
-                foodDiv.appendChild(foodName);
-                
-                foodIcons.appendChild(foodDiv);
-            });
-            
             // 檢查是否提供正確的食物
             if (correctFoods.includes(detectedFood)) {
+                // 防止重複提交得分 - 禁用提交按鈕
+                submitFoodBtn.disabled = true;
+                submitFoodBtn.classList.add("opacity-50", "cursor-not-allowed");
+                
+                // 正確答案時才顯示建議食物
+                neededFood.classList.remove("hidden");
+                foodIcons.innerHTML = "";
+                
+                correctFoods.forEach(food => {
+                    const foodDiv = document.createElement("div");
+                    foodDiv.className = "food-icon-container flex flex-col items-center";
+                    
+                    const foodEmoji = document.createElement("span");
+                    foodEmoji.textContent = foods[food].emoji;
+                    foodEmoji.classList.add("text-4xl");
+                    
+                    const foodName = document.createElement("span");
+                    foodName.textContent = foods[food].name;
+                    foodName.className = "text-sm font-medium mt-1";
+                    
+                    foodDiv.appendChild(foodEmoji);
+                    foodDiv.appendChild(foodName);
+                    
+                    foodIcons.appendChild(foodDiv);
+                });
+                
                 // 創建五彩紙屑效果
                 createConfetti();
                 
@@ -1091,25 +1099,39 @@
                                 <i class="fas fa-thumbs-up text-xl text-green-600 dark:text-green-400"></i>
                             </div>
                         </div>
+                        <p class="mt-3 text-sm">
+                            <i class="fas fa-hourglass-half mr-1"></i>
+                            <span id="next-timer">3</span> 秒後進入下一題...
+                        </p>
                     </div>
                 `;
                 
-                // 播放成功音效（如果在GitHub Pages上部署，則可以加入）
-                // const successSound = new Audio('success.mp3');
-                // successSound.play();
+                // 顯示倒數計時
+                let countdown = 3;
+                const timerElement = document.getElementById("next-timer");
+                const countdownInterval = setInterval(() => {
+                    countdown--;
+                    if (timerElement) {
+                        timerElement.textContent = countdown;
+                    }
+                }, 1000);
                 
                 // 檢查是否達到目標分數
                 if (score >= targetScore) {
+                    clearInterval(countdownInterval);
                     endGame(true);
                     return;
                 }
                 
                 // 3秒後顯示下一個患者
                 setTimeout(() => {
+                    clearInterval(countdownInterval);
                     nextPatient();
                 }, 3000);
             } else {
-                // 錯誤的食物
+                // 錯誤的食物 - 確保建議食物區域保持隱藏
+                neededFood.classList.add("hidden");
+                
                 resultMessage.classList.remove("hidden");
                 resultMessage.innerHTML = `
                     <div class="p-4 rounded-xl bg-red-100 dark:bg-red-900/40 border-2 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200">
