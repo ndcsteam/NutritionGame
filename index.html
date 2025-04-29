@@ -382,7 +382,7 @@
                         <div class="patient-card bg-sky-50 dark:bg-sky-900 p-4 w-full relative mb-4">
                             <div class="doctor-character"></div>
                             <div class="flex items-center space-x-4">
-                                <div id="patient-image" class="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex-shrink-0 border-4 border-sky-200 dark:border-sky-800 shadow-lg">
+                                <div id="patient-image" class="w-24 h-24 rounded-lg bg-slate-200 dark:bg-slate-700 overflow-hidden flex-shrink-0 border-4 border-sky-200 dark:border-sky-800 shadow-lg">
                                     <img id="patient-avatar" src="" alt="患者" class="w-full h-full object-cover">
                                 </div>
                                 <div class="text-left">
@@ -802,9 +802,35 @@
         const symptomIcons = document.getElementById("symptom-icons");
         const nutrientList = document.getElementById("nutrient-list");
         
-        // 生成隨機頭像 URL
+        // 所有可能的名字
+        const patientGivenNames = ["英秀", "一心", "幼羚", "家寶", "有容", "念慈", "思賢", "向華", "修端", "允行"];
+        const patientSurnames = ["陳", "林", "黃", "張", "李", "王", "吳", "劉", "蔡", "楊"];
+        
+        // 名字與頭像的對應關係
+        const patientAvatars = {
+            "英秀": "./images/girl01.png",
+            "一心": "./images/girl02.png",
+            "幼羚": "./images/girl03.png",
+            "家寶": "./images/girl04.png",
+            "有容": "./images/girl05.png",
+            "念慈": "./images/boy01.png",
+            "思賢": "./images/boy02.png",
+            "向華": "./images/boy03.png",
+            "修端": "./images/boy04.png",
+            "允行": "./images/boy05.png"
+        };
+        
+        // 根據疾病索引選擇對應的名字
+        function getPatientNameByIndex(index) {
+            // 確保索引在範圍內
+            const nameIndex = index % patientGivenNames.length;
+            return patientGivenNames[nameIndex];
+        }
+        
+        // 生成頭像 URL
         function generateAvatarUrl(seed) {
-            return `https://picsum.photos/seed/patient${seed}/200/200`;
+            const patientName = getPatientNameByIndex(seed - 1);
+            return patientAvatars[patientName];
         }
         
         // 初始化模型和相機
@@ -990,11 +1016,16 @@
             currentPatientIndex = newIndex;
             const patient = diseases[currentPatientIndex];
             
+            // 生成患者名稱，確保名字和頭像匹配
+            const patientGivenName = getPatientNameByIndex(currentPatientIndex);
+            const surname = ["陳", "林", "黃", "張", "李", "王", "吳", "劉", "蔡", "楊"][Math.floor(Math.random() * 10)];
+            const fullName = surname + patientGivenName;
+            
             // 更新患者資訊
-            patientName.textContent = generatePatientName();
+            patientName.textContent = fullName;
             conditionText.textContent = patient.name;
             patientDescription.textContent = patient.description;
-            patientAvatar.src = patient.avatar;
+            patientAvatar.src = patientAvatars[patientGivenName];
             
             // 更新症狀圖標
             symptomIcons.innerHTML = '';
