@@ -74,23 +74,15 @@
     <!-- Teachable Machine 函式庫 -->
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Sans+HK:wght@400;500;700&family=ZCOOL+KuaiLe&family=ZCOOL+QingKe+HuangYou&family=Ma+Shan+Zheng&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800;900&display=swap');
         
         body, html {
             font-family: 'Noto Sans TC', sans-serif;
             scroll-behavior: smooth;
         }
         
-        .game-title {
-            font-family: 'ZCOOL KuaiLe', cursive;
-        }
-        
-        .card-title {
-            font-family: 'Ma Shan Zheng', cursive;
-        }
-        
-        .stat-number {
-            font-family: 'ZCOOL QingKe HuangYou', cursive;
+        .game-title, .card-title, .stat-number {
+            font-family: 'Noto Sans TC', sans-serif;
         }
         
         .game-container {
@@ -537,6 +529,92 @@
         </div>
     </div>
 
+    <!-- 遊戲封面頁面 -->
+    <div id="cover-page" class="fixed inset-0 flex flex-col items-center justify-center z-50 bg-gradient-to-b from-primary-100 to-primary-200 dark:from-slate-800 dark:to-slate-900">
+        <div class="max-w-3xl w-full px-6 py-12 text-center">
+            <!-- 遊戲標題 -->
+            <div class="mb-8">
+                <div class="flex items-center justify-center space-x-4 mb-4">
+                    <i class="fas fa-apple-alt text-red-500 text-5xl animate-bounce-slow"></i>
+                    <h1 class="text-6xl font-extrabold text-primary-600 dark:text-primary-400 tracking-wide game-title">小小營養醫生</h1>
+                    <i class="fas fa-carrot text-orange-500 text-5xl animate-bounce-slow" style="animation-delay: 0.3s"></i>
+                </div>
+                <p class="text-2xl font-medium text-primary-700 dark:text-primary-300 italic">用美味食物打敗疾病，當個營養英雄！</p>
+            </div>
+            
+            <!-- 遊戲說明 -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 mb-10 max-w-2xl mx-auto border-2 border-primary-300 dark:border-primary-700">
+                <h2 class="text-3xl font-bold text-primary-600 dark:text-primary-400 mb-4 card-title">遊戲說明</h2>
+                
+                <div class="space-y-4 text-left">
+                    <div class="flex items-start">
+                        <div class="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-full mr-3 flex-shrink-0">
+                            <i class="fas fa-user-md text-primary-600 dark:text-primary-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-xl text-slate-800 dark:text-slate-200 mb-1">成為營養醫生</h3>
+                            <p class="text-slate-600 dark:text-slate-400">幫助生病的患者找出適合的食物，治療他們的營養缺乏症！</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-full mr-3 flex-shrink-0">
+                            <i class="fas fa-camera text-primary-600 dark:text-primary-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-xl text-slate-800 dark:text-slate-200 mb-1">使用相機</h3>
+                            <p class="text-slate-600 dark:text-slate-400">對著相機展示食物，我們的智能系統會識別你提供的食物！</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-full mr-3 flex-shrink-0">
+                            <i class="fas fa-star text-primary-600 dark:text-primary-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-xl text-slate-800 dark:text-slate-200 mb-1">獲得分數</h3>
+                            <p class="text-slate-600 dark:text-slate-400">提供正確的食物獲得10分！在60秒內達到50分即可勝利！</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex flex-wrap justify-center gap-5">
+                    <div class="food-card p-4 bg-primary-50 dark:bg-primary-800/30 rounded-xl flex flex-col items-center border border-primary-200 dark:border-primary-700">
+                        <div class="text-4xl mb-1">🍎</div>
+                        <div class="text-sm font-medium">蘋果</div>
+                    </div>
+                    <div class="food-card p-4 bg-primary-50 dark:bg-primary-800/30 rounded-xl flex flex-col items-center border border-primary-200 dark:border-primary-700">
+                        <div class="text-4xl mb-1">🍊</div>
+                        <div class="text-sm font-medium">橙子</div>
+                    </div>
+                    <div class="food-card p-4 bg-primary-50 dark:bg-primary-800/30 rounded-xl flex flex-col items-center border border-primary-200 dark:border-primary-700">
+                        <div class="text-4xl mb-1">🥚</div>
+                        <div class="text-sm font-medium">雞蛋</div>
+                    </div>
+                    <div class="food-card p-4 bg-primary-50 dark:bg-primary-800/30 rounded-xl flex flex-col items-center border border-primary-200 dark:border-primary-700">
+                        <div class="text-4xl mb-1">🥕</div>
+                        <div class="text-sm font-medium">胡蘿蔔</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 開始遊戲按鈕 -->
+            <button id="start-game-button" class="mt-4 bg-primary-500 hover:bg-primary-600 text-white text-2xl font-bold py-5 px-12 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500 focus:ring-opacity-50 transition btn-3d shadow-xl">
+                <i class="fas fa-play-circle mr-2"></i>開始遊戲
+            </button>
+            
+            <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">
+                <i class="fas fa-volume-up mr-1"></i>請確保已打開音效以獲得最佳體驗
+            </p>
+        </div>
+        
+        <!-- 裝飾性食物圖標 -->
+        <div class="absolute bottom-10 left-10 food-icon text-6xl animate-float">🍎</div>
+        <div class="absolute top-10 right-10 food-icon text-6xl animate-float" style="animation-delay: 0.5s;">🥚</div>
+        <div class="absolute bottom-20 right-20 food-icon text-6xl animate-float" style="animation-delay: 1s;">🍊</div>
+        <div class="absolute top-20 left-20 food-icon text-6xl animate-float" style="animation-delay: 1.5s;">🥕</div>
+    </div>
+    
     <!-- 遊戲結束對話框 -->
     <div id="game-over-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50 hidden">
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 relative overflow-hidden">
@@ -556,6 +634,12 @@
             </div>
         </div>
     </div>
+    
+    <!-- 音樂播放器 -->
+    <audio id="background-music" loop>
+        <source src="./audio/CausalMusic.mp3" type="audio/mp3">
+        您的瀏覽器不支持音訊元素。
+    </audio>
 
     <script>
         // 深色模式檢測
@@ -570,6 +654,9 @@
                 document.documentElement.classList.remove('dark');
             }
         });
+        
+        // 音樂控制
+        const backgroundMusic = document.getElementById('background-music');
         
         // Teachable Machine 模型 URL
         const modelURL = "https://teachablemachine.withgoogle.com/models/xrzPvPeMK/";
@@ -677,6 +764,8 @@
         ];
         
         // DOM 元素
+        const coverPage = document.getElementById("cover-page");
+        const startGameButton = document.getElementById("start-game-button");
         const webcamPlaceholder = document.getElementById("webcam-placeholder");
         const webcamWrapper = document.getElementById("webcam-wrapper");
         const loadingIndicator = document.getElementById("loading-indicator");
@@ -1067,6 +1156,9 @@
             clearInterval(gameTimer);
             gameStarted = false;
             
+            // 停止背景音樂
+            backgroundMusic.pause();
+            
             finalScore.textContent = score;
             
             if (isWin) {
@@ -1096,6 +1188,13 @@
             // 如果相機已開啟，直接重新開始遊戲
             if (isCameraEnabled) {
                 startGame();
+                // 重新播放背景音樂
+                try {
+                    backgroundMusic.currentTime = 0;
+                    backgroundMusic.play();
+                } catch (error) {
+                    console.error("無法播放背景音樂:", error);
+                }
             } else {
                 gameMessage.innerHTML = `
                     <p class="flex items-center justify-center">
@@ -1103,8 +1202,31 @@
                         <span>遊戲將在您開啟相機後開始。請對著相機展示適合患者的食物！</span>
                     </p>
                 `;
+                // 自動啟動相機
+                init();
             }
         }
+        
+        // 封面頁面開始遊戲按鈕事件
+        startGameButton.addEventListener("click", async () => {
+            // 隱藏封面頁面，顯示遊戲畫面
+            coverPage.classList.add("hidden");
+            
+            // 播放背景音樂
+            try {
+                await backgroundMusic.play();
+            } catch (error) {
+                console.error("無法播放背景音樂:", error);
+                // 音樂播放失敗不影響遊戲進行
+            }
+            
+            // 自動啟動遊戲和相機
+            if (!isModelLoading) {
+                isModelLoading = true;
+                await init();
+                isModelLoading = false;
+            }
+        });
         
         // 啟用/停用相機
         enableCameraBtn.addEventListener("click", async () => {
