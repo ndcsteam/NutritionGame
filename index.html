@@ -676,6 +676,36 @@
         let currentPatientIndex = -1;
         let detectedFood = null;
         
+        // 病人名字和頭像數據 - 必須定義在前面
+        const patientGivenNames = ["英秀", "一心", "幼羚", "家寶", "有容", "念慈", "思賢", "向華", "修端", "允行"];
+        const patientSurnames = ["陳", "林", "黃", "張", "李", "王", "吳", "劉", "蔡", "楊"];
+        
+        // 名字與頭像映射
+        const patientAvatarMapping = {
+            "英秀": "./images/girl01.png",
+            "一心": "./images/girl02.png",
+            "幼羚": "./images/girl03.png",
+            "家寶": "./images/girl04.png",
+            "有容": "./images/girl05.png",
+            "念慈": "./images/boy01.png",
+            "思賢": "./images/boy02.png",
+            "向華": "./images/boy03.png",
+            "修端": "./images/boy04.png",
+            "允行": "./images/boy05.png"
+        };
+        
+        // 根據索引選擇名字 - 必須定義在前面
+        function getPatientNameByIndex(index) {
+            const nameIndex = index % patientGivenNames.length;
+            return patientGivenNames[nameIndex];
+        }
+        
+        // 生成頭像 URL - 必須定義在前面
+        function generateAvatarUrl(seed) {
+            const patientName = getPatientNameByIndex(seed - 1);
+            return patientAvatarMapping[patientName];
+        }
+        
         // 食物資料
         const foods = {
             apple: {
@@ -802,36 +832,7 @@
         const symptomIcons = document.getElementById("symptom-icons");
         const nutrientList = document.getElementById("nutrient-list");
         
-        // 所有可能的名字
-        const patientGivenNames = ["英秀", "一心", "幼羚", "家寶", "有容", "念慈", "思賢", "向華", "修端", "允行"];
-        const patientSurnames = ["陳", "林", "黃", "張", "李", "王", "吳", "劉", "蔡", "楊"];
-        
-        // 名字與頭像的對應關係
-        const patientAvatars = {
-            "英秀": "./images/girl01.png",
-            "一心": "./images/girl02.png",
-            "幼羚": "./images/girl03.png",
-            "家寶": "./images/girl04.png",
-            "有容": "./images/girl05.png",
-            "念慈": "./images/boy01.png",
-            "思賢": "./images/boy02.png",
-            "向華": "./images/boy03.png",
-            "修端": "./images/boy04.png",
-            "允行": "./images/boy05.png"
-        };
-        
-        // 根據疾病索引選擇對應的名字
-        function getPatientNameByIndex(index) {
-            // 確保索引在範圍內
-            const nameIndex = index % patientGivenNames.length;
-            return patientGivenNames[nameIndex];
-        }
-        
-        // 生成頭像 URL
-        function generateAvatarUrl(seed) {
-            const patientName = getPatientNameByIndex(seed - 1);
-            return patientAvatars[patientName];
-        }
+        // 這個部分已被移至前面的代碼中，所以這裡刪除重複內容
         
         // 初始化模型和相機
         async function init() {
@@ -1025,7 +1026,7 @@
             patientName.textContent = fullName;
             conditionText.textContent = patient.name;
             patientDescription.textContent = patient.description;
-            patientAvatar.src = patientAvatars[patientGivenName];
+            patientAvatar.src = patientAvatarMapping[patientGivenName];
             
             // 更新症狀圖標
             symptomIcons.innerHTML = '';
