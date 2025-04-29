@@ -451,7 +451,7 @@
                                 <i class="fas fa-capsules"></i> 維生素C
                             </span>
                             <span class="vitamin-pill text-xs">
-                                <i class="fas fa-capsules"></i> 膳食纖維
+                                <i class="fas fa-capsules"></i> 鐵質
                             </span>
                         </div>
                     </div>
@@ -467,9 +467,6 @@
                             <span class="vitamin-pill text-xs">
                                 <i class="fas fa-capsules"></i> 維生素C
                             </span>
-                            <span class="vitamin-pill text-xs">
-                                <i class="fas fa-capsules"></i> 鉀
-                            </span>
                         </div>
                     </div>
                 </div>
@@ -483,9 +480,6 @@
                         <div class="mt-1 flex flex-wrap gap-1">
                             <span class="vitamin-pill text-xs">
                                 <i class="fas fa-capsules"></i> 蛋白質
-                            </span>
-                            <span class="vitamin-pill text-xs">
-                                <i class="fas fa-capsules"></i> 維生素B12
                             </span>
                             <span class="vitamin-pill text-xs">
                                 <i class="fas fa-capsules"></i> 維生素D
@@ -503,9 +497,6 @@
                         <div class="mt-1 flex flex-wrap gap-1">
                             <span class="vitamin-pill text-xs">
                                 <i class="fas fa-capsules"></i> 維生素A
-                            </span>
-                            <span class="vitamin-pill text-xs">
-                                <i class="fas fa-capsules"></i> β-胡蘿蔔素
                             </span>
                         </div>
                     </div>
@@ -706,32 +697,32 @@
             return patientAvatarMapping[patientName];
         }
         
-        // 食物資料
+        // 食物資料 - 更新後的營養素信息
         const foods = {
             apple: {
                 name: "蘋果",
-                nutrients: ["維生素C", "膳食纖維", "抗氧化物"],
+                nutrients: ["維生素C", "鐵質"],
                 emoji: "🍎",
                 color: "bg-red-500",
                 icon: "fa-apple-alt"
             },
             orange: {
                 name: "橙子",
-                nutrients: ["維生素C", "鉀"],
+                nutrients: ["維生素C"],
                 emoji: "🍊",
                 color: "bg-orange-500",
                 icon: "fa-lemon"
             },
             egg: {
                 name: "雞蛋",
-                nutrients: ["蛋白質", "維生素B12", "維生素D"],
+                nutrients: ["蛋白質", "維生素D"],
                 emoji: "🥚",
                 color: "bg-yellow-500",
                 icon: "fa-egg"
             },
             carrot: {
                 name: "胡蘿蔔",
-                nutrients: ["維生素A", "β-胡蘿蔔素"],
+                nutrients: ["維生素A"],
                 emoji: "🥕",
                 color: "bg-amber-500",
                 icon: "fa-carrot"
@@ -745,7 +736,7 @@
             }
         };
         
-        // 疾病資料
+        // 疾病資料 - 更新後的疾病案例
         const diseases = [
             {
                 name: "壞血病",
@@ -775,19 +766,19 @@
                 symptomIcons: ["fa-low-vision", "fa-moon"]
             },
             {
-                name: "鉀離子缺乏症",
-                description: "體內鉀含量不足導致的問題。症狀包括：肌肉無力、疲勞、心率不規則和便秘。",
-                remedies: ["orange"],
-                nutrients: ["鉀"],
+                name: "軟骨病",
+                description: "缺乏維生素D協助吸收鈣，令骨骼變得鬆化。",
+                remedies: ["egg"],
+                nutrients: ["維生素D"],
                 avatar: generateAvatarUrl(4),
-                icon: "fa-heartbeat",
-                symptomIcons: ["fa-heart", "fa-dizzy"]
+                icon: "fa-bone",
+                symptomIcons: ["fa-user-injured", "fa-child"]
             },
             {
                 name: "貧血症",
-                description: "鐵質和維生素B12缺乏導致的疾病。症狀包括：疲勞、虛弱、頭暈、注意力不集中和蒼白。",
-                remedies: ["egg"],
-                nutrients: ["鐵質", "維生素B12"],
+                description: "鐵質缺乏導致的疾病。症狀包括：疲勞、虛弱、頭暈、注意力不集中和蒼白。",
+                remedies: ["apple"],
+                nutrients: ["鐵質"],
                 avatar: generateAvatarUrl(5),
                 icon: "fa-tint",
                 symptomIcons: ["fa-tired", "fa-dizzy"]
