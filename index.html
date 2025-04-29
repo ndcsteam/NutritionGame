@@ -1,1 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teachable Machine 模型預測器</title>
+    <!-- 添加自定義 CSP 以確保在 GitHub Pages 上能正常運行 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; img-src 'self' blob: data:; connect-src 'self' https://teachablemachine.withgoogle.com https://storage.googleapis.com; worker-src 'self' blob:;">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <!-- Teachable Machine 函式庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-3xl">
+        <h1 class="text-3xl font-bold text-center mb-8 text-primary">Teachable Machine 模型預測器</h1>
+        
+        <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow-md mb-8">
+            <div id="webcam-container" class="relative mb-4">
+                <div id="webcam-placeholder" class="bg-gray-300 dark:bg-gray-700 rounded-lg w-full h-64 flex items-center justify-center">
+                    <p class="text-gray-500 dark:text-gray-400">相機畫面將顯示在這裡</p>
+                </div>
+                <div id="webcam-wrapper" class="hidden">
+                    <video id="webcam" autoplay playsinline class="w-full rounded-lg"></video>
+                </div>
+                <div id="loading-indicator" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg hidden">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                </div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button id="enable-camera" class="bg-primary hover:bg-opacity-90 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 transition text-base">
+                    啟用相機
+                </button>
+                <button id="disable-camera" class="bg-gray-500 hover:bg-opacity-90 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition text-base hidden">
+                    停用相機
+                </button>
+            </div>
+        </div>
+        
+        <div id="prediction-container" class="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow-md hidden">
+            <h2 class="text-xl font-semibold mb-4">預測結果</h2>
+            <div id="prediction-results" class="space-y-4"></div>
+        </div>
+        
+        <div id="error-container" class="bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 p-4 rounded-lg mt-4 hidden">
+            <p id="error-message"></p>
+        </div>
+        
+        <!-- GitHub 部署說明 -->
+        <div class="mt-8 text-sm text-gray-600 dark:text-gray-400">
+            <p class="mb-2">📋 <strong>GitHub Pages 部署說明</strong></p>
+            <ol class="list-decimal pl-5 space-y-1">
+                <li>將此 HTML 文件保存為 <code>index.html</code></li>
+                <li>創建一個新的 GitHub 倉庫</li>
+                <li>上傳 index.html 文件到倉庫</li>
+                <li>前往 Settings > Pages > 從 main 分支部署</li>
+            </ol>
+        </div>
+    </div>
 
+    <script>
+        // 深色模式檢測
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+        
+        // Teachable Machine 模型 URL（注意我移除了最後的問號）
+        const modelURL = "https://teachablemachine.withgoogle.com/models/xrzPvPeMK/";
+        const modelJSONURL = modelURL + "model.json";
+        const metadataURL = modelURL + "metadata.json";
+        
+        let model, webcam, maxPredictions;
+        let isModelLoading = false;
+        let isCameraEnabled = false;
+        
+        // DOM 元素
+        const webcamPlaceholder = document.getElementById("webcam-placeholder");
+        const webcamWrapper = document.getElementById("webcam-wrapper");
+        const loadingIndicator = document.getElementById("loading-indicator");
+        const enableCameraBtn = document.getElementById("enable-camera");
+        const disableCameraBtn = document.getElementById("disable-camera");
+        const predictionContainer = document.getElementById("prediction-container");
+        const predictionResults = document.getElementById("prediction-results");
+        const errorContainer = document.getElementById("error-container");
+        const errorMessage = document.getElementById("error-message");
+        
+        // 初始化應用程式
+        async function init() {
+            try {
+                showLoading(true);
+                showError(false);
+                
+                // 載入模型和元數據
+                model = await tmImage.load(modelJSONURL, metadataURL);
+                maxPredictions = model.getTotalClasses();
+                
+                // 設置網絡攝像頭
+                const flip = true; // 是否翻轉相機
+                webcam = new tmImage.Webcam(400, 400, flip);
+                await webcam.setup();
+                
+                // 添加相機元素
+                webcamPlaceholder.classList.add("hidden");
+                webcamWrapper.classList.remove("hidden");
+                document.getElementById("webcam").replaceWith(webcam.canvas);
+                
+                // 設置預測結果 UI
+                predictionContainer.classList.remove("hidden");
+                createPredictionLabels();
+                
+                // 開始預測循環
+                webcam.play();
+                isCameraEnabled = true;
+                window.requestAnimationFrame(loop);
+                
+                // 更新按鈕狀態
+                enableCameraBtn.classList.add("hidden");
+                disableCameraBtn.classList.remove("hidden");
+            } catch (error) {
+                console.error("初始化錯誤:", error);
+                showError(true, "無法初始化模型或相機: " + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // 創建預測標籤元素
+        function createPredictionLabels() {
+            predictionResults.innerHTML = "";
+            
+            for (let i = 0; i < maxPredictions; i++) {
+                const classPrediction = document.createElement("div");
+                classPrediction.classList.add("prediction-item");
+                
+                const labelDiv = document.createElement("div");
+                labelDiv.classList.add("flex", "items-center", "justify-between", "mb-1");
+                
+                const labelText = document.createElement("span");
+                labelText.textContent = model.getClassLabels()[i];
+                labelText.classList.add("font-medium");
+                labelDiv.appendChild(labelText);
+                
+                const percentText = document.createElement("span");
+                percentText.id = `confidence-${i}`;
+                percentText.textContent = "0%";
+                percentText.classList.add("text-sm", "text-gray-600", "dark:text-gray-400");
+                labelDiv.appendChild(percentText);
+                
+                classPrediction.appendChild(labelDiv);
+                
+                const progressContainer = document.createElement("div");
+                progressContainer.classList.add("w-full", "bg-gray-200", "dark:bg-gray-700", "rounded-full", "h-2.5");
+                
+                const progressBar = document.createElement("div");
+                progressBar.id = `bar-${i}`;
+                progressBar.classList.add("bg-primary", "h-2.5", "rounded-full", "transition-all", "duration-300", "ease-out");
+                progressBar.style.width = "0%";
+                
+                progressContainer.appendChild(progressBar);
+                classPrediction.appendChild(progressContainer);
+                
+                predictionResults.appendChild(classPrediction);
+            }
+        }
+        
+        // 預測循環
+        async function loop() {
+            if (!isCameraEnabled) return;
+            
+            webcam.update();
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
+        
+        // 執行預測
+        async function predict() {
+            try {
+                const prediction = await model.predict(webcam.canvas);
+                
+                for (let i = 0; i < maxPredictions; i++) {
+                    const classPrediction = prediction[i];
+                    const percent = Math.round(classPrediction.probability * 100);
+                    
+                    document.getElementById(`confidence-${i}`).textContent = `${percent}%`;
+                    document.getElementById(`bar-${i}`).style.width = `${percent}%`;
+                }
+            } catch (error) {
+                console.error("預測過程中出錯:", error);
+                showError(true, "預測過程中出錯: " + error.message);
+            }
+        }
+        
+        // 啟用/停用相機
+        enableCameraBtn.addEventListener("click", async () => {
+            if (isModelLoading) return;
+            
+            if (!model) {
+                isModelLoading = true;
+                await init();
+                isModelLoading = false;
+            } else {
+                webcamPlaceholder.classList.add("hidden");
+                webcamWrapper.classList.remove("hidden");
+                webcam.play();
+                isCameraEnabled = true;
+                window.requestAnimationFrame(loop);
+                
+                enableCameraBtn.classList.add("hidden");
+                disableCameraBtn.classList.remove("hidden");
+                predictionContainer.classList.remove("hidden");
+            }
+        });
+        
+        disableCameraBtn.addEventListener("click", () => {
+            webcam.stop();
+            isCameraEnabled = false;
+            
+            webcamPlaceholder.classList.remove("hidden");
+            webcamWrapper.classList.add("hidden");
+            
+            enableCameraBtn.classList.remove("hidden");
+            disableCameraBtn.classList.add("hidden");
+        });
+        
+        // 輔助函數
+        function showLoading(show) {
+            if (show) {
+                loadingIndicator.classList.remove("hidden");
+            } else {
+                loadingIndicator.classList.add("hidden");
+            }
+        }
+        
+        function showError(show, message = "") {
+            if (show) {
+                errorContainer.classList.remove("hidden");
+                errorMessage.textContent = message;
+            } else {
+                errorContainer.classList.add("hidden");
+                errorMessage.textContent = "";
+            }
+        }
+        
+        // 錯誤處理增強
+        window.addEventListener('error', function(event) {
+            showError(true, `JavaScript 錯誤: ${event.message}`);
+            console.error('捕獲到錯誤:', event.error);
+        });
+    </script>
+</body>
+</html>
