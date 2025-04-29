@@ -345,7 +345,8 @@
                     <!-- 按鈕和檢測結果 -->
                     <div class="space-y-4">
                         <div class="flex flex-wrap gap-3">
-                            <button id="enable-camera" class="bg-primary-500 hover:bg-primary-600 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 transition btn-3d text-base">
+                            <!-- 起始按鈕已隱藏，由封面頁面的按鈕取代 -->
+                            <button id="enable-camera" class="hidden bg-primary-500 hover:bg-primary-600 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 transition btn-3d text-base">
                                 <i class="fas fa-play-circle mr-2"></i>開始遊戲
                             </button>
                             <button id="disable-camera" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition btn-3d btn-3d-red text-base hidden">
@@ -852,55 +853,37 @@
             }
         }
         
-        // 創建預測標籤元素
+        // 創建預測標籤元素 - 只顯示最高置信度的結果
         function createPredictionLabels() {
             predictionResults.innerHTML = "";
             
-            for (let i = 0; i < maxPredictions; i++) {
-                const className = model.getClassLabels()[i];
-                const food = foods[className] || { name: className, color: "bg-gray-500", icon: "fa-question" };
-                
-                const classPrediction = document.createElement("div");
-                classPrediction.classList.add("prediction-item", "mb-2", "last:mb-0");
-                
-                const labelDiv = document.createElement("div");
-                labelDiv.classList.add("flex", "items-center", "justify-between", "mb-1");
-                
-                const labelContainer = document.createElement("div");
-                labelContainer.classList.add("flex", "items-center");
-                
-                const labelIcon = document.createElement("i");
-                labelIcon.classList.add("fas", food.icon, "mr-2", "text-" + food.color.replace('bg-', ''));
-                labelContainer.appendChild(labelIcon);
-                
-                const labelText = document.createElement("span");
-                labelText.textContent = food.name;
-                labelText.classList.add("font-medium");
-                labelContainer.appendChild(labelText);
-                
-                labelDiv.appendChild(labelContainer);
-                
-                const percentText = document.createElement("span");
-                percentText.id = `confidence-${i}`;
-                percentText.textContent = "0%";
-                percentText.classList.add("text-sm", "font-semibold", "bg-primary-100", "dark:bg-primary-900", "px-2", "py-0.5", "rounded-full");
-                labelDiv.appendChild(percentText);
-                
-                classPrediction.appendChild(labelDiv);
-                
-                const progressContainer = document.createElement("div");
-                progressContainer.classList.add("w-full", "bg-gray-200", "dark:bg-gray-700", "rounded-full", "h-2.5");
-                
-                const progressBar = document.createElement("div");
-                progressBar.id = `bar-${i}`;
-                progressBar.classList.add("progress-bar", food.color, "h-2.5", "rounded-full");
-                progressBar.style.width = "0%";
-                
-                progressContainer.appendChild(progressBar);
-                classPrediction.appendChild(progressContainer);
-                
-                predictionResults.appendChild(classPrediction);
-            }
+            // 創建單一信心指示器
+            const confidenceIndicator = document.createElement("div");
+            confidenceIndicator.classList.add("mt-2", "text-center");
+            
+            const confidenceLabel = document.createElement("p");
+            confidenceLabel.classList.add("text-sm", "font-medium", "text-slate-600", "dark:text-slate-400", "mb-2");
+            confidenceLabel.textContent = "辨識信心度";
+            confidenceIndicator.appendChild(confidenceLabel);
+            
+            const progressContainer = document.createElement("div");
+            progressContainer.classList.add("w-full", "bg-gray-200", "dark:bg-gray-700", "rounded-full", "h-3");
+            
+            const progressBar = document.createElement("div");
+            progressBar.id = "confidence-bar";
+            progressBar.classList.add("progress-bar", "bg-primary-500", "h-3", "rounded-full");
+            progressBar.style.width = "0%";
+            
+            progressContainer.appendChild(progressBar);
+            confidenceIndicator.appendChild(progressContainer);
+            
+            const percentText = document.createElement("p");
+            percentText.id = "confidence-value";
+            percentText.textContent = "0%";
+            percentText.classList.add("mt-1", "text-right", "font-bold", "text-primary-600", "dark:text-primary-400");
+            confidenceIndicator.appendChild(percentText);
+            
+            predictionResults.appendChild(confidenceIndicator);
         }
         
         // 預測循環
@@ -912,7 +895,7 @@
             window.requestAnimationFrame(loop);
         }
         
-        // 執行預測
+        // 執行預測 - 簡化顯示
         async function predict() {
             try {
                 const prediction = await model.predict(webcam.canvas);
@@ -922,15 +905,26 @@
                 
                 for (let i = 0; i < maxPredictions; i++) {
                     const classPrediction = prediction[i];
-                    const percent = Math.round(classPrediction.probability * 100);
-                    
-                    document.getElementById(`confidence-${i}`).textContent = `${percent}%`;
-                    document.getElementById(`bar-${i}`).style.width = `${percent}%`;
                     
                     if (classPrediction.probability > highestProb) {
                         highestProb = classPrediction.probability;
                         highestClass = classPrediction.className;
                     }
+                }
+                
+                // 更新信心度顯示
+                const percent = Math.round(highestProb * 100);
+                document.getElementById("confidence-bar").style.width = `${percent}%`;
+                document.getElementById("confidence-value").textContent = `${percent}%`;
+                
+                // 根據不同閾值調整進度條顏色
+                const confidenceBar = document.getElementById("confidence-bar");
+                if (percent < 30) {
+                    confidenceBar.className = "progress-bar bg-red-500 h-3 rounded-full";
+                } else if (percent < 70) {
+                    confidenceBar.className = "progress-bar bg-yellow-500 h-3 rounded-full";
+                } else {
+                    confidenceBar.className = "progress-bar bg-green-500 h-3 rounded-full";
                 }
                 
                 // 僅當置信度大於 60% 時更新檢測結果
@@ -1207,11 +1201,29 @@
             }
         }
         
-        // 封面頁面開始遊戲按鈕事件
+        // 創建過場動畫元素
+        const transitionScreen = document.createElement("div");
+        transitionScreen.className = "fixed inset-0 bg-primary-500 flex items-center justify-center z-[60] transition-opacity duration-1000";
+        transitionScreen.style.opacity = "0";
+        transitionScreen.style.pointerEvents = "none";
+        
+        const transitionContent = document.createElement("div");
+        transitionContent.className = "text-center";
+        
+        const loadingIcon = document.createElement("div");
+        loadingIcon.className = "inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-white mb-4";
+        
+        const loadingText = document.createElement("p");
+        loadingText.className = "text-white text-xl font-bold";
+        loadingText.textContent = "正在準備遊戲...";
+        
+        transitionContent.appendChild(loadingIcon);
+        transitionContent.appendChild(loadingText);
+        transitionScreen.appendChild(transitionContent);
+        document.body.appendChild(transitionScreen);
+        
+        // 封面頁面開始遊戲按鈕事件 - 添加過場效果
         startGameButton.addEventListener("click", async () => {
-            // 隱藏封面頁面，顯示遊戲畫面
-            coverPage.classList.add("hidden");
-            
             // 播放背景音樂
             try {
                 await backgroundMusic.play();
@@ -1220,10 +1232,24 @@
                 // 音樂播放失敗不影響遊戲進行
             }
             
+            // 顯示過場動畫
+            transitionScreen.style.opacity = "1";
+            transitionScreen.style.pointerEvents = "auto";
+            
+            // 延遲隱藏封面頁面以製造轉場效果
+            setTimeout(() => {
+                coverPage.classList.add("hidden");
+            }, 500);
+            
             // 自動啟動遊戲和相機
             if (!isModelLoading) {
                 isModelLoading = true;
                 await init();
+                
+                // 載入完成後，淡出過場動畫
+                transitionScreen.style.opacity = "0";
+                transitionScreen.style.pointerEvents = "none";
+                
                 isModelLoading = false;
             }
         });
