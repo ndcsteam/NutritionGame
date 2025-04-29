@@ -3,10 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teachable Machine 模型預測器</title>
-    <!-- 添加自定義 CSP 以確保在 GitHub Pages 上能正常運行 -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; img-src 'self' blob: data:; connect-src 'self' https://teachablemachine.withgoogle.com https://storage.googleapis.com; worker-src 'self' blob:;">
-    
+    <title>營養醫生 - 透過食物治療疾病</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -15,6 +12,13 @@
                 extend: {
                     colors: {
                         primary: '#5D5CDE',
+                        secondary: '#FF6B6B',
+                        success: '#4CAF50',
+                        warning: '#FFC107',
+                        info: '#2196F3',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     }
                 }
             }
@@ -25,52 +29,121 @@
     <!-- Teachable Machine 函式庫 -->
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 </head>
-<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-3xl">
-        <h1 class="text-3xl font-bold text-center mb-8 text-primary">Teachable Machine 模型預測器</h1>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen">
+    <div class="container mx-auto px-4 py-6 max-w-4xl">
+        <!-- 遊戲標題 -->
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-primary">營養醫生</h1>
+            <p class="text-lg text-gray-600 dark:text-gray-400">透過提供正確的食物幫助患者恢復健康</p>
+        </div>
         
-        <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow-md mb-8">
-            <div id="webcam-container" class="relative mb-4">
-                <div id="webcam-placeholder" class="bg-gray-300 dark:bg-gray-700 rounded-lg w-full h-64 flex items-center justify-center">
-                    <p class="text-gray-500 dark:text-gray-400">相機畫面將顯示在這裡</p>
+        <!-- 遊戲狀態 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md flex flex-col items-center justify-center">
+                <p class="text-xl font-semibold text-info">分數</p>
+                <p id="score" class="text-3xl font-bold">0</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md flex flex-col items-center justify-center">
+                <p class="text-xl font-semibold text-warning">剩餘時間</p>
+                <p id="timer" class="text-3xl font-bold">60</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md flex flex-col items-center justify-center">
+                <p class="text-xl font-semibold text-secondary">目標分數</p>
+                <p id="target-score" class="text-3xl font-bold">50</p>
+            </div>
+        </div>
+        
+        <!-- 遊戲主區域 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- 相機和檢測結果 -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
+                <h2 class="text-xl font-semibold mb-4 text-center">您的食物</h2>
+                <!-- 相機容器 -->
+                <div id="webcam-container" class="relative mb-4">
+                    <div id="webcam-placeholder" class="bg-gray-300 dark:bg-gray-700 rounded-lg w-full h-64 flex items-center justify-center">
+                        <p class="text-gray-500 dark:text-gray-400">點擊下方按鈕開啟相機</p>
+                    </div>
+                    <div id="webcam-wrapper" class="hidden">
+                        <video id="webcam" autoplay playsinline class="w-full rounded-lg"></video>
+                    </div>
+                    <div id="loading-indicator" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg hidden">
+                        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                    </div>
                 </div>
-                <div id="webcam-wrapper" class="hidden">
-                    <video id="webcam" autoplay playsinline class="w-full rounded-lg"></video>
-                </div>
-                <div id="loading-indicator" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg hidden">
-                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                
+                <!-- 按鈕和檢測結果 -->
+                <div class="space-y-4">
+                    <div class="flex flex-wrap gap-2">
+                        <button id="enable-camera" class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 transition">
+                            開啟相機
+                        </button>
+                        <button id="disable-camera" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition hidden">
+                            關閉相機
+                        </button>
+                        <button id="submit-food" class="bg-success hover:bg-success/90 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-success focus:ring-opacity-50 transition hidden">
+                            提交食物
+                        </button>
+                    </div>
+                    
+                    <div id="detection-result" class="hidden">
+                        <h3 class="font-medium text-lg mb-2">檢測結果：</h3>
+                        <div id="detection-details" class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
+                            <p id="detected-food" class="font-semibold text-xl"></p>
+                            <div class="mt-2 space-y-2" id="prediction-results"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <div class="flex flex-col sm:flex-row gap-4">
-                <button id="enable-camera" class="bg-primary hover:bg-opacity-90 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 transition text-base">
-                    啟用相機
-                </button>
-                <button id="disable-camera" class="bg-gray-500 hover:bg-opacity-90 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition text-base hidden">
-                    停用相機
-                </button>
+            <!-- 病人和疾病資訊 -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md flex flex-col">
+                <h2 class="text-xl font-semibold mb-4 text-center">當前患者</h2>
+                
+                <div id="patient-container" class="flex-grow flex flex-col items-center justify-center text-center">
+                    <div id="patient-image" class="w-48 h-48 mb-4 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex items-center justify-center">
+                        <img id="patient-avatar" src="" alt="患者" class="w-full h-full object-cover">
+                    </div>
+                    <h3 id="patient-name" class="text-xl font-bold mb-2">載入中...</h3>
+                    <div id="patient-condition" class="mb-4">
+                        <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                            載入中...
+                        </span>
+                    </div>
+                    <div id="patient-description" class="text-gray-600 dark:text-gray-400">
+                        <p>請等待遊戲開始...</p>
+                    </div>
+                    <div id="needed-food" class="mt-4 hidden">
+                        <p class="text-sm font-medium">建議食物：</p>
+                        <div id="food-icons" class="flex gap-2 justify-center mt-1"></div>
+                    </div>
+                    <div id="result-message" class="mt-4 hidden"></div>
+                </div>
             </div>
         </div>
         
-        <div id="prediction-container" class="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow-md hidden">
-            <h2 class="text-xl font-semibold mb-4">預測結果</h2>
-            <div id="prediction-results" class="space-y-4"></div>
+        <!-- 遊戲狀態訊息 -->
+        <div id="game-message" class="mt-6 bg-primary/10 dark:bg-primary/20 border border-primary/20 p-4 rounded-lg text-center">
+            <p>遊戲將在您開啟相機後開始。請對著相機展示適合患者的食物！</p>
+        </div>
+
+        <!-- 遊戲結束對話框 -->
+        <div id="game-over-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50 hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+                <h2 id="modal-title" class="text-2xl font-bold mb-4 text-center">遊戲結束</h2>
+                <p id="modal-message" class="text-center mb-6">您的最終分數: <span id="final-score">0</span></p>
+                <div class="flex justify-center">
+                    <button id="restart-button" class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-8 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 transition">
+                        再玩一次
+                    </button>
+                </div>
+            </div>
         </div>
         
-        <div id="error-container" class="bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 p-4 rounded-lg mt-4 hidden">
+        <!-- 錯誤訊息 -->
+        <div id="error-container" class="mt-6 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 p-4 rounded-lg hidden">
             <p id="error-message"></p>
         </div>
         
-        <!-- GitHub 部署說明 -->
-        <div class="mt-8 text-sm text-gray-600 dark:text-gray-400">
-            <p class="mb-2">📋 <strong>GitHub Pages 部署說明</strong></p>
-            <ol class="list-decimal pl-5 space-y-1">
-                <li>將此 HTML 文件保存為 <code>index.html</code></li>
-                <li>創建一個新的 GitHub 倉庫</li>
-                <li>上傳 index.html 文件到倉庫</li>
-                <li>前往 Settings > Pages > 從 main 分支部署</li>
-            </ol>
-        </div>
     </div>
 
     <script>
@@ -87,14 +160,85 @@
             }
         });
         
-        // Teachable Machine 模型 URL（注意我移除了最後的問號）
+        // Teachable Machine 模型 URL
         const modelURL = "https://teachablemachine.withgoogle.com/models/xrzPvPeMK/";
         const modelJSONURL = modelURL + "model.json";
         const metadataURL = modelURL + "metadata.json";
         
+        // 遊戲變數
         let model, webcam, maxPredictions;
         let isModelLoading = false;
         let isCameraEnabled = false;
+        let gameStarted = false;
+        let gameTimer;
+        let timeLeft = 60;
+        let score = 0;
+        let targetScore = 50;
+        let currentPatientIndex = -1;
+        let detectedFood = null;
+        
+        // 食物資料
+        const foods = {
+            apple: {
+                name: "蘋果",
+                nutrients: ["維生素C", "膳食纖維", "抗氧化物"],
+                emoji: "🍎"
+            },
+            orange: {
+                name: "橙子",
+                nutrients: ["維生素C", "鉀"],
+                emoji: "🍊"
+            },
+            egg: {
+                name: "雞蛋",
+                nutrients: ["蛋白質", "維生素B12", "維生素D"],
+                emoji: "🥚"
+            },
+            carrot: {
+                name: "胡蘿蔔",
+                nutrients: ["維生素A", "β-胡蘿蔔素"],
+                emoji: "🥕"
+            },
+            background: {
+                name: "沒有食物",
+                nutrients: [],
+                emoji: "❓"
+            }
+        };
+        
+        // 疾病資料
+        const diseases = [
+            {
+                name: "壞血病",
+                description: "維生素C缺乏症，可能導致牙齦出血、傷口癒合慢、疲勞和皮膚問題。",
+                remedies: ["apple", "orange"],
+                avatar: generateAvatarUrl(1)
+            },
+            {
+                name: "蛋白質缺乏症",
+                description: "蛋白質攝取不足，可能導致肌肉萎縮、生長遲緩、免疫力下降。",
+                remedies: ["egg"],
+                avatar: generateAvatarUrl(2)
+            },
+            {
+                name: "夜盲症",
+                description: "維生素A缺乏症，導致在昏暗光線下視力變差，還可能引起皮膚和黏膜問題。",
+                remedies: ["carrot"],
+                avatar: generateAvatarUrl(3)
+            },
+            {
+                name: "鉀離子缺乏症",
+                description: "鉀攝取不足，可能導致肌肉無力、疲勞、心律不整等問題。",
+                remedies: ["orange"],
+                avatar: generateAvatarUrl(4)
+            },
+            {
+                name: "貧血症",
+                description: "鐵質不足可能導致疲勞、虛弱、頭暈和注意力不集中。",
+                remedies: ["egg"],
+                avatar: generateAvatarUrl(5)
+            }
+        ];
         
         // DOM 元素
         const webcamPlaceholder = document.getElementById("webcam-placeholder");
@@ -102,12 +246,35 @@
         const loadingIndicator = document.getElementById("loading-indicator");
         const enableCameraBtn = document.getElementById("enable-camera");
         const disableCameraBtn = document.getElementById("disable-camera");
-        const predictionContainer = document.getElementById("prediction-container");
+        const submitFoodBtn = document.getElementById("submit-food");
+        const detectionResult = document.getElementById("detection-result");
+        const detectedFoodEl = document.getElementById("detected-food");
         const predictionResults = document.getElementById("prediction-results");
         const errorContainer = document.getElementById("error-container");
         const errorMessage = document.getElementById("error-message");
+        const gameMessage = document.getElementById("game-message");
+        const scoreDisplay = document.getElementById("score");
+        const timerDisplay = document.getElementById("timer");
+        const targetScoreDisplay = document.getElementById("target-score");
+        const patientName = document.getElementById("patient-name");
+        const patientCondition = document.getElementById("patient-condition");
+        const patientDescription = document.getElementById("patient-description");
+        const patientAvatar = document.getElementById("patient-avatar");
+        const neededFood = document.getElementById("needed-food");
+        const foodIcons = document.getElementById("food-icons");
+        const resultMessage = document.getElementById("result-message");
+        const gameOverModal = document.getElementById("game-over-modal");
+        const modalTitle = document.getElementById("modal-title");
+        const modalMessage = document.getElementById("modal-message");
+        const finalScore = document.getElementById("final-score");
+        const restartButton = document.getElementById("restart-button");
         
-        // 初始化應用程式
+        // 生成隨機頭像 URL
+        function generateAvatarUrl(seed) {
+            return `https://picsum.photos/seed/patient${seed}/200/200`;
+        }
+        
+        // 初始化模型和相機
         async function init() {
             try {
                 showLoading(true);
@@ -128,7 +295,6 @@
                 document.getElementById("webcam").replaceWith(webcam.canvas);
                 
                 // 設置預測結果 UI
-                predictionContainer.classList.remove("hidden");
                 createPredictionLabels();
                 
                 // 開始預測循環
@@ -139,6 +305,13 @@
                 // 更新按鈕狀態
                 enableCameraBtn.classList.add("hidden");
                 disableCameraBtn.classList.remove("hidden");
+                submitFoodBtn.classList.remove("hidden");
+                detectionResult.classList.remove("hidden");
+                
+                // 開始遊戲
+                if (!gameStarted) {
+                    startGame();
+                }
             } catch (error) {
                 console.error("初始化錯誤:", error);
                 showError(true, "無法初始化模型或相機: " + error.message);
@@ -159,7 +332,8 @@
                 labelDiv.classList.add("flex", "items-center", "justify-between", "mb-1");
                 
                 const labelText = document.createElement("span");
-                labelText.textContent = model.getClassLabels()[i];
+                const className = model.getClassLabels()[i];
+                labelText.textContent = foods[className] ? foods[className].name : className;
                 labelText.classList.add("font-medium");
                 labelDiv.appendChild(labelText);
                 
@@ -172,11 +346,11 @@
                 classPrediction.appendChild(labelDiv);
                 
                 const progressContainer = document.createElement("div");
-                progressContainer.classList.add("w-full", "bg-gray-200", "dark:bg-gray-700", "rounded-full", "h-2.5");
+                progressContainer.classList.add("w-full", "bg-gray-200", "dark:bg-gray-700", "rounded-full", "h-2");
                 
                 const progressBar = document.createElement("div");
                 progressBar.id = `bar-${i}`;
-                progressBar.classList.add("bg-primary", "h-2.5", "rounded-full", "transition-all", "duration-300", "ease-out");
+                progressBar.classList.add("bg-primary", "h-2", "rounded-full", "transition-all", "duration-300", "ease-out");
                 progressBar.style.width = "0%";
                 
                 progressContainer.appendChild(progressBar);
@@ -200,16 +374,178 @@
             try {
                 const prediction = await model.predict(webcam.canvas);
                 
+                let highestProb = 0;
+                let highestClass = null;
+                
                 for (let i = 0; i < maxPredictions; i++) {
                     const classPrediction = prediction[i];
                     const percent = Math.round(classPrediction.probability * 100);
                     
                     document.getElementById(`confidence-${i}`).textContent = `${percent}%`;
                     document.getElementById(`bar-${i}`).style.width = `${percent}%`;
+                    
+                    if (classPrediction.probability > highestProb) {
+                        highestProb = classPrediction.probability;
+                        highestClass = classPrediction.className;
+                    }
+                }
+                
+                // 僅當置信度大於 60% 時更新檢測結果
+                if (highestProb > 0.6 && highestClass !== "background") {
+                    detectedFood = highestClass;
+                    detectedFoodEl.textContent = foods[highestClass].name + " " + foods[highestClass].emoji;
+                } else if (highestClass === "background" && highestProb > 0.8) {
+                    detectedFood = "background";
+                    detectedFoodEl.textContent = "沒有食物";
                 }
             } catch (error) {
                 console.error("預測過程中出錯:", error);
-                showError(true, "預測過程中出錯: " + error.message);
+            }
+        }
+        
+        // 開始遊戲
+        function startGame() {
+            gameStarted = true;
+            score = 0;
+            timeLeft = 60;
+            updateScore();
+            updateTimer();
+            
+            // 顯示第一個患者
+            nextPatient();
+            
+            // 設置遊戲計時器
+            gameTimer = setInterval(() => {
+                timeLeft--;
+                updateTimer();
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+            
+            gameMessage.innerHTML = "<p>遊戲開始！請為患者提供正確的食物來治療他們的疾病。</p>";
+        }
+        
+        // 更新分數顯示
+        function updateScore() {
+            scoreDisplay.textContent = score;
+        }
+        
+        // 更新計時器顯示
+        function updateTimer() {
+            timerDisplay.textContent = timeLeft;
+        }
+        
+        // 顯示下一個患者
+        function nextPatient() {
+            // 隨機選擇患者
+            const newIndex = Math.floor(Math.random() * diseases.length);
+            currentPatientIndex = newIndex;
+            const patient = diseases[currentPatientIndex];
+            
+            // 更新患者資訊
+            patientName.textContent = generatePatientName();
+            patientCondition.textContent = patient.name;
+            patientDescription.textContent = patient.description;
+            patientAvatar.src = patient.avatar;
+            
+            // 顯示所需食物
+            neededFood.classList.add("hidden");
+            foodIcons.innerHTML = "";
+            resultMessage.classList.add("hidden");
+        }
+        
+        // 生成隨機病人名稱
+        function generatePatientName() {
+            const firstNames = ["張", "李", "王", "陳", "林", "黃", "吳", "趙", "劉", "蔡"];
+            const lastNames = ["小明", "小華", "大雄", "小雅", "小菁", "小峰", "小琪", "小傑", "小芳", "小婷"];
+            
+            return firstNames[Math.floor(Math.random() * firstNames.length)] + lastNames[Math.floor(Math.random() * lastNames.length)];
+        }
+        
+        // 提交食物
+        function submitFood() {
+            if (!gameStarted || !detectedFood) return;
+            
+            const patient = diseases[currentPatientIndex];
+            const correctFoods = patient.remedies;
+            
+            // 顯示所需食物
+            neededFood.classList.remove("hidden");
+            foodIcons.innerHTML = "";
+            
+            correctFoods.forEach(food => {
+                const foodItem = document.createElement("span");
+                foodItem.textContent = foods[food].emoji;
+                foodItem.classList.add("text-3xl");
+                foodItem.title = foods[food].name;
+                foodIcons.appendChild(foodItem);
+            });
+            
+            // 檢查是否提供正確的食物
+            if (correctFoods.includes(detectedFood)) {
+                // 正確的食物
+                score += 10;
+                updateScore();
+                
+                resultMessage.classList.remove("hidden");
+                resultMessage.innerHTML = `
+                    <div class="bg-green-100 dark:bg-green-900 p-3 rounded-md text-green-800 dark:text-green-200">
+                        <p>太棒了！${foods[detectedFood].name}是正確的食物！</p>
+                        <p class="text-sm mt-1">患者的健康狀況得到了改善。</p>
+                    </div>
+                `;
+                
+                // 檢查是否達到目標分數
+                if (score >= targetScore) {
+                    endGame(true);
+                    return;
+                }
+                
+                // 3秒後顯示下一個患者
+                setTimeout(() => {
+                    nextPatient();
+                }, 3000);
+            } else {
+                // 錯誤的食物
+                resultMessage.classList.remove("hidden");
+                resultMessage.innerHTML = `
+                    <div class="bg-red-100 dark:bg-red-900 p-3 rounded-md text-red-800 dark:text-red-200">
+                        <p>很遺憾，${detectedFood === "background" ? "沒有提供食物" : foods[detectedFood].name + "不是正確的食物"}。</p>
+                        <p class="text-sm mt-1">請嘗試其他食物來治療患者的${patient.name}。</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // 結束遊戲
+        function endGame(isWin = false) {
+            clearInterval(gameTimer);
+            gameStarted = false;
+            
+            finalScore.textContent = score;
+            
+            if (isWin) {
+                modalTitle.textContent = "恭喜你！";
+                modalMessage.innerHTML = `您成功達到目標分數！<br>最終分數：<span id="final-score" class="font-bold">${score}</span>`;
+            } else {
+                modalTitle.textContent = "時間到";
+                modalMessage.innerHTML = `您的最終分數：<span id="final-score" class="font-bold">${score}</span><br>${score >= targetScore ? "恭喜達成目標！" : "再接再厲！"}`;
+            }
+            
+            gameOverModal.classList.remove("hidden");
+        }
+        
+        // 重新開始遊戲
+        function restartGame() {
+            gameOverModal.classList.add("hidden");
+            
+            // 如果相機已開啟，直接重新開始遊戲
+            if (isCameraEnabled) {
+                startGame();
+            } else {
+                gameMessage.innerHTML = "<p>遊戲將在您開啟相機後開始。請對著相機展示適合患者的食物！</p>";
             }
         }
         
@@ -230,7 +566,12 @@
                 
                 enableCameraBtn.classList.add("hidden");
                 disableCameraBtn.classList.remove("hidden");
-                predictionContainer.classList.remove("hidden");
+                submitFoodBtn.classList.remove("hidden");
+                detectionResult.classList.remove("hidden");
+                
+                if (!gameStarted) {
+                    startGame();
+                }
             }
         });
         
@@ -243,7 +584,21 @@
             
             enableCameraBtn.classList.remove("hidden");
             disableCameraBtn.classList.add("hidden");
+            submitFoodBtn.classList.add("hidden");
+            
+            // 暫停遊戲
+            if (gameStarted) {
+                clearInterval(gameTimer);
+                gameStarted = false;
+                gameMessage.innerHTML = "<p>遊戲已暫停。請重新開啟相機繼續遊戲。</p>";
+            }
         });
+        
+        // 提交食物
+        submitFoodBtn.addEventListener("click", submitFood);
+        
+        // 重新開始遊戲
+        restartButton.addEventListener("click", restartGame);
         
         // 輔助函數
         function showLoading(show) {
@@ -263,12 +618,6 @@
                 errorMessage.textContent = "";
             }
         }
-        
-        // 錯誤處理增強
-        window.addEventListener('error', function(event) {
-            showError(true, `JavaScript 錯誤: ${event.message}`);
-            console.error('捕獲到錯誤:', event.error);
-        });
     </script>
 </body>
 </html>
