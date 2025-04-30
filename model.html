@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小小營養醫生 - 食物治療冒險</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            300: '#5eead4',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        },
+                        secondary: {
+                            50: '#fdf2f8',
+                            100: '#fce7f3',
+                            200: '#fbcfe8',
+                            300: '#f9a8d4',
+                            400: '#f472b6',
+                            500: '#ec4899',
+                            600: '#db2777',
+                            700: '#be185d',
+                            800: '#9d174d',
+                            900: '#831843',
+                        },
+                        accent: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            200: '#fde68a',
+                            300: '#fcd34d',
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                            800: '#92400e',
+                            900: '#78350f',
+                        },
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce 2s infinite',
+                        'wiggle': 'wiggle 1s ease-in-out infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-3deg)' },
+                            '50%': { transform: 'rotate(3deg)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <!-- Teachable Machine 函式庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800;900&display=swap');
+        
+        body, html {
+            font-family: 'Noto Sans TC', sans-serif;
+            scroll-behavior: smooth;
+        }
+        
+        .game-title, .card-title, .stat-number {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        
+        .game-container {
+            background-image: url('data:image/svg+xml;charset=utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2056%20100%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20fill%3D%22%2314b8a6%22%20fill-opacity%3D%220.05%22%20d%3D%22M56%2098.42c-8.67-1.65-16.27-4.37-22.44-7.98a42.3%2042.3%200%200%201-14.77-15.58C10.53%2061.56%204.02%2041.15%201.6%2013.59Q.96%205.72.02%200H56v98.42z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: 0 0;
+            background-size: 100% 100%;
+        }
+        
+        .dark .game-container {
+            background-image: url('data:image/svg+xml;charset=utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2056%20100%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20fill%3D%22%2314b8a6%22%20fill-opacity%3D%220.1%22%20d%3D%22M56%2098.42c-8.67-1.65-16.27-4.37-22.44-7.98a42.3%2042.3%200%200%201-14.77-15.58C10.53%2061.56%204.02%2041.15%201.6%2013.59Q.96%205.72.02%200H56v98.42z%22%2F%3E%3C%2Fsvg%3E');
+        }
+        
+        .food-card {
+            transition: all 0.3s ease;
+        }
+        
+        .food-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .patient-bubble {
+            position: relative;
+        }
+        
+        .patient-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 20px;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: currentColor transparent;
+            display: block;
+            width: 0;
+        }
+        
+        .light-bubble:after {
+            border-color: #e0f2fe transparent;
+        }
+        
+        .dark-bubble:after {
+            border-color: #075985 transparent;
+        }
+        
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+        
+        .btn-3d {
+            position: relative;
+            box-shadow: 0 4px 0 #0d9488;
+            top: 0;
+            transition: all 0.1s ease;
+        }
+        
+        .btn-3d:active {
+            top: 3px;
+            box-shadow: 0 1px 0 #0d9488;
+        }
+        
+        .btn-3d-red {
+            box-shadow: 0 4px 0 #b91c1c;
+        }
+        
+        .btn-3d-red:active {
+            box-shadow: 0 1px 0 #b91c1c;
+        }
+        
+        .btn-3d-green {
+            box-shadow: 0 4px 0 #15803d;
+        }
+        
+        .btn-3d-green:active {
+            box-shadow: 0 1px 0 #15803d;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            animation: confetti-fall 3s ease-in-out;
+            opacity: 0;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(500px) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        /* 視覺效果 */
+        .food-icon {
+            display: inline-block;
+            font-size: 2rem;
+            margin: 0.2rem;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .food-icon:nth-child(2n) {
+            animation-delay: 0.5s;
+        }
+        
+        .food-icon:nth-child(3n) {
+            animation-delay: 1s;
+        }
+        
+        .vitamin-pill {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #f9a8d4 0%, #f472b6 100%);
+            color: white;
+            border-radius: 999px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin: 0.25rem;
+        }
+        
+        .vitamin-pill i {
+            margin-right: 0.25rem;
+        }
+        
+        .patient-card {
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .patient-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .health-meter {
+            height: 20px;
+            border-radius: 10px;
+            background: #f3f4f6;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .health-meter .fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #22c55e 100%);
+            border-radius: 10px;
+            transition: width 1s ease-in-out;
+        }
+        
+        .detection-highlight {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 4px solid #22c55e;
+            border-radius: 8px;
+            opacity: 0;
+            animation: highlight-pulse 2s infinite;
+        }
+        
+        @keyframes highlight-pulse {
+            0%, 100% {
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+        
+        /* 遊戲角色 */
+        .doctor-character {
+            position: absolute;
+            bottom: -20px;
+            right: -20px;
+            width: 120px;
+            height: 120px;
+            background-image: url('data:image/svg+xml;charset=utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22%2314b8a6%22%20d%3D%22M12%2C4a4%2C4%2C0%2C1%2C1-4%2C4%2C4%2C4%2C0%2C0%2C1%2C4-4m0%2C10c4.42%2C0%2C8%2C1.79%2C8%2C4v2H4V18c0-2.21%2C3.58-4%2C8-4Z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-size: contain;
+            transform: scaleX(-1);
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="bg-primary-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen">
+    <div class="game-container relative">
+        <div class="container mx-auto px-4 py-6 max-w-5xl">
+            <!-- 遊戲標題 -->
+            <div class="text-center mb-6">
+                <div class="flex items-center justify-center space-x-2 mb-2">
+                    <i class="fas fa-apple-alt text-red-500 text-3xl animate-bounce-slow"></i>
+                    <h1 class="text-5xl font-extrabold text-primary-600 dark:text-primary-400 tracking-wide game-title">小小營養醫生</h1>
+                    <i class="fas fa-carrot text-orange-500 text-3xl animate-bounce-slow" style="animation-delay: 0.3s"></i>
+                </div>
+                <p class="text-lg font-medium text-primary-700 dark:text-primary-300 italic">用美味食物打敗疾病，當個營養英雄！</p>
+            </div>
+            
+            <!-- 遊戲狀態 -->
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-lg border-2 border-primary-200 dark:border-primary-900 flex flex-col items-center relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full"></div>
+                    <i class="fas fa-star text-accent-400 text-xl mb-1 z-10"></i>
+                    <p class="text-lg font-semibold text-primary-600 dark:text-primary-400 z-10 card-title">總分</p>
+                    <p id="score" class="text-4xl font-extrabold z-10 stat-number">0</p>
+                </div>
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-lg border-2 border-primary-200 dark:border-primary-900 flex flex-col items-center relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full"></div>
+                    <i class="fas fa-hourglass-half text-accent-400 text-xl mb-1 z-10"></i>
+                    <p class="text-lg font-semibold text-primary-600 dark:text-primary-400 z-10 card-title">剩餘時間</p>
+                    <p id="timer" class="text-4xl font-extrabold z-10 stat-number">60</p>
+                </div>
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-lg border-2 border-primary-200 dark:border-primary-900 flex flex-col items-center relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full"></div>
+                    <i class="fas fa-trophy text-accent-400 text-xl mb-1 z-10"></i>
+                    <p class="text-lg font-semibold text-primary-600 dark:text-primary-400 z-10 card-title">目標分數</p>
+                    <p id="target-score" class="text-4xl font-extrabold z-10 stat-number">50</p>
+                </div>
+            </div>
+            
+            <!-- 遊戲主區域 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 相機和檢測結果 -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border-2 border-primary-200 dark:border-primary-900 relative">
+                    <span class="absolute top-0 left-4 -translate-y-1/2 bg-primary-500 text-white px-4 py-1 rounded-full font-bold shadow-md">
+                        <i class="fas fa-camera mr-1"></i> 食物掃描區
+                    </span>
+                    
+                    <!-- 相機容器 -->
+                    <div id="webcam-container" class="relative mb-4 mt-2">
+                        <div id="webcam-placeholder" class="bg-slate-200 dark:bg-slate-700 rounded-xl w-full h-64 flex flex-col items-center justify-center p-4 border-2 border-dashed border-primary-300 dark:border-primary-700">
+                            <i class="fas fa-camera text-4xl text-primary-400 dark:text-primary-600 mb-2"></i>
+                            <p class="text-slate-500 dark:text-slate-400 text-center">點擊下方按鈕開啟相機</p>
+                            <div class="mt-4 flex space-x-2">
+                                <div class="food-icon">🍎</div>
+                                <div class="food-icon">🍊</div>
+                                <div class="food-icon">🥚</div>
+                                <div class="food-icon">🥕</div>
+                            </div>
+                        </div>
+                        <div id="webcam-wrapper" class="hidden">
+                            <video id="webcam" autoplay playsinline class="w-full rounded-xl border-2 border-primary-300 dark:border-primary-700"></video>
+                            <div id="detection-highlight" class="detection-highlight hidden"></div>
+                        </div>
+                        <div id="loading-indicator" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-xl hidden">
+                            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary-500"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 按鈕和檢測結果 -->
+                    <div class="space-y-4">
+                        <div class="flex flex-wrap gap-3">
+                            <!-- 起始按鈕已隱藏，由封面頁面的按鈕取代 -->
+                            <button id="enable-camera" class="hidden bg-primary-500 hover:bg-primary-600 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 transition btn-3d text-base">
+                                <i class="fas fa-play-circle mr-2"></i>開始遊戲
+                            </button>
+                            <button id="disable-camera" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition btn-3d btn-3d-red text-base hidden">
+                                <i class="fas fa-stop-circle mr-2"></i>停止遊戲
+                            </button>
+                            <button id="submit-food" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition btn-3d btn-3d-green text-base hidden">
+                                <i class="fas fa-utensils mr-2"></i>提供食物
+                            </button>
+                        </div>
+                        
+                        <div id="detection-result" class="hidden">
+                            <h3 class="font-bold text-lg mb-2 flex items-center">
+                                <i class="fas fa-search mr-2 text-primary-500"></i>掃描結果：
+                            </h3>
+                            <div id="detection-details" class="bg-primary-50 dark:bg-slate-700 p-4 rounded-xl border-2 border-primary-200 dark:border-primary-800">
+                                <div class="flex items-center justify-between mb-3">
+                                    <p id="detected-food" class="font-bold text-2xl text-primary-700 dark:text-primary-300"></p>
+                                    <span id="detected-food-emoji" class="text-3xl"></span>
+                                </div>
+                                <div class="space-y-3" id="prediction-results"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 病人和疾病資訊 -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border-2 border-primary-200 dark:border-primary-900 flex flex-col relative">
+                    <span class="absolute top-0 left-4 -translate-y-1/2 bg-secondary-500 text-white px-4 py-1 rounded-full font-bold shadow-md">
+                        <i class="fas fa-user-injured mr-1"></i> 患者診療區
+                    </span>
+                    
+                    <div id="patient-container" class="flex-grow flex flex-col items-center justify-start text-center mt-4 relative">
+                        <div class="patient-card bg-sky-50 dark:bg-sky-900 p-4 w-full relative mb-4">
+                            <div class="doctor-character"></div>
+                            <div class="flex items-center space-x-4">
+                                <div id="patient-image" class="w-24 h-24 rounded-lg bg-slate-200 dark:bg-slate-700 overflow-hidden flex-shrink-0 border-4 border-sky-200 dark:border-sky-800 shadow-lg">
+                                    <img id="patient-avatar" src="" alt="患者" class="w-full h-full object-cover">
+                                </div>
+                                <div class="text-left">
+                                    <h3 id="patient-name" class="text-xl font-bold mb-1">載入中...</h3>
+                                    <div id="patient-condition" class="mb-2">
+                                        <span class="inline-block px-3 py-1 rounded-full text-sm font-bold bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 border border-red-200 dark:border-red-800">
+                                            <i class="fas fa-virus mr-1"></i><span id="condition-text">載入中...</span>
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="health-meter mt-2">
+                                        <div id="health-fill" class="fill" style="width: 30%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="patient-bubble light-bubble dark:dark-bubble p-4 bg-sky-100 dark:bg-sky-900 rounded-xl w-full mt-2 text-left relative">
+                            <div id="symptom-icons" class="absolute right-3 top-3 flex space-x-1">
+                                <i class="fas fa-tired text-red-500 text-xl"></i>
+                                <i class="fas fa-dizzy text-orange-500 text-xl"></i>
+                            </div>
+                            <h4 class="font-bold text-lg mb-2 text-primary-700 dark:text-primary-300">
+                                <i class="fas fa-comment-medical mr-2"></i>症狀描述
+                            </h4>
+                            <div id="patient-description" class="text-slate-600 dark:text-slate-300">
+                                <p>請等待遊戲開始...</p>
+                            </div>
+                        </div>
+                        
+                        <div id="needed-nutrients" class="mt-4 w-full">
+                            <h4 class="font-bold text-lg mb-2 text-primary-700 dark:text-primary-300 text-left">
+                                <i class="fas fa-vial mr-2"></i>缺乏的營養素
+                            </h4>
+                            <div id="nutrient-list" class="flex flex-wrap gap-2">
+                                <!-- 營養素會在這裡動態生成 -->
+                            </div>
+                        </div>
+                        
+                        <div id="needed-food" class="mt-4 w-full hidden">
+                            <h4 class="font-bold text-lg mb-2 text-red-600 dark:text-red-400 text-left">
+                                <i class="fas fa-apple-alt mr-2"></i>建議食物
+                            </h4>
+                            <div id="food-recommendation" class="bg-red-50 dark:bg-red-900/30 p-3 rounded-lg border border-red-200 dark:border-red-800">
+                                <div id="food-icons" class="flex flex-wrap justify-center gap-3">
+                                    <!-- 食物圖標會在這裡動態生成 -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="result-message" class="mt-4 w-full hidden"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 食物參考卡片 -->
+            <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="food-card bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-md border-2 border-red-200 dark:border-red-900">
+                    <div class="p-3 bg-red-50 dark:bg-red-900/30 flex justify-center items-center">
+                        <span class="text-4xl">🍎</span>
+                    </div>
+                    <div class="p-3">
+                        <h3 class="font-bold text-lg text-red-600 dark:text-red-400">蘋果</h3>
+                        <div class="mt-1 flex flex-wrap gap-1">
+                            <span class="vitamin-pill text-xs">
+                                <i class="fas fa-capsules"></i> 維生素C
+                            </span>
+                            <span class="vitamin-pill text-xs">
+                                <i class="fas fa-capsules"></i> 鐵質
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="food-card bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-md border-2 border-orange-200 dark:border-orange-900">
+                    <div class="p-3 bg-orange-50 dark:bg-orange-900/30 flex justify-center items-center">
+                        <span class="text-4xl">🍊</span>
+                    </div>
+                    <div class="p-3">
+                        <h3 class="font-bold text-lg text-orange-600 dark:text-orange-400">橙子</h3>
+                        <div class="mt-1 flex flex-wrap gap-1">
+                            <span class="vitamin-pill text-xs">
+                                <i class="fas fa-capsules"></i> 維生素C
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="food-card bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-md border-2 border-yellow-200 dark:border-yellow-900">
+                    <div class="p-3 bg-yellow-50 dark:bg-yellow-900/30 flex justify-center items-center">
+                        <span class="text-4xl">🥚</span>
+                    </div>
+                    <div class="p-3">
+                        <h3 class="font-bold text-lg text-yellow-600 dark:text-yellow-400">雞蛋</h3>
+                        <div class="mt-1 flex flex-wrap gap-1">
+                            <span class="vitamin-pill text-xs">
+                                <i class="fas fa-capsules"></i> 蛋白質
+                            </span>
+                            <span class="vitamin-pill text-xs">
+                                <i class="fas fa-capsules"></i> 維生素D
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="food-card bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-md border-2 border-amber-200 dark:border-amber-900">
+                    <div class="p-3 bg-amber-50 dark:bg-amber-900/30 flex justify-center items-center">
+                        <span class="text-4xl">🥕</span>
+                    </div>
+                    <div class="p-3">
+                        <h3 class="font-bold text-lg text-amber-600 dark:text-amber-400">胡蘿蔔</h3>
+                        <div class="mt-1 flex flex-wrap gap-1">
+                            <span class="vitamin-pill text-xs">
+                                <i class="fas fa-capsules"></i> 維生素A
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 遊戲狀態訊息 -->
+            <div id="game-message" class="mt-6 bg-primary-100 dark:bg-primary-900/40 border-2 border-primary-200 dark:border-primary-700 p-4 rounded-xl text-center">
+                <p class="flex items-center justify-center">
+                    <i class="fas fa-info-circle text-primary-600 dark:text-primary-400 mr-2 text-xl"></i>
+                    <span>遊戲將在您開啟相機後開始。請對著相機展示適合患者的食物！</span>
+                </p>
+            </div>
+            
+            <!-- 錯誤訊息 -->
+            <div id="error-container" class="mt-6 bg-red-100 dark:bg-red-900/40 border-2 border-red-200 dark:border-red-800 p-4 rounded-xl hidden">
+                <p id="error-message" class="flex items-center">
+                    <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400 mr-2 text-xl"></i>
+                    <span></span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 遊戲封面頁面 -->
+    <div id="cover-page" class="fixed inset-0 flex flex-col items-center justify-center z-50 bg-gradient-to-b from-primary-100 to-primary-200 dark:from-slate-800 dark:to-slate-900">
+        <div class="max-w-3xl w-full px-6 py-12 text-center">
+            <!-- 遊戲標題 -->
+            <div class="mb-8">
+                <div class="flex items-center justify-center space-x-4 mb-4">
+                    <i class="fas fa-apple-alt text-red-500 text-5xl animate-bounce-slow"></i>
+                    <h1 class="text-6xl font-extrabold text-primary-600 dark:text-primary-400 tracking-wide game-title">小小營養醫生</h1>
+                    <i class="fas fa-carrot text-orange-500 text-5xl animate-bounce-slow" style="animation-delay: 0.3s"></i>
+                </div>
+                <p class="text-2xl font-medium text-primary-700 dark:text-primary-300 italic">用美味食物打敗疾病，當個營養英雄！</p>
+            </div>
+            
+            <!-- 遊戲說明 -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 mb-10 max-w-2xl mx-auto border-2 border-primary-300 dark:border-primary-700">
+                <h2 class="text-3xl font-bold text-primary-600 dark:text-primary-400 mb-4 card-title">遊戲說明</h2>
+                
+                <div class="space-y-4 text-left">
+                    <div class="flex items-start">
+                        <div class="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-full mr-3 flex-shrink-0">
+                            <i class="fas fa-user-md text-primary-600 dark:text-primary-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-xl text-slate-800 dark:text-slate-200 mb-1">成為營養醫生</h3>
+                            <p class="text-slate-600 dark:text-slate-400">幫助生病的患者找出適合的食物，治療他們的營養缺乏症！</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-full mr-3 flex-shrink-0">
+                            <i class="fas fa-camera text-primary-600 dark:text-primary-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-xl text-slate-800 dark:text-slate-200 mb-1">使用相機</h3>
+                            <p class="text-slate-600 dark:text-slate-400">對著相機展示食物，我們的智能系統會識別你提供的食物！</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-full mr-3 flex-shrink-0">
+                            <i class="fas fa-star text-primary-600 dark:text-primary-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-xl text-slate-800 dark:text-slate-200 mb-1">獲得分數</h3>
+                            <p class="text-slate-600 dark:text-slate-400">提供正確的食物獲得10分！在60秒內達到50分即可勝利！</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex flex-wrap justify-center gap-5">
+                    <div class="food-card p-4 bg-primary-50 dark:bg-primary-800/30 rounded-xl flex flex-col items-center border border-primary-200 dark:border-primary-700">
+                        <div class="text-4xl mb-1">🍎</div>
+                        <div class="text-sm font-medium">蘋果</div>
+                    </div>
+                    <div class="food-card p-4 bg-primary-50 dark:bg-primary-800/30 rounded-xl flex flex-col items-center border border-primary-200 dark:border-primary-700">
+                        <div class="text-4xl mb-1">🍊</div>
+                        <div class="text-sm font-medium">橙子</div>
+                    </div>
+                    <div class="food-card p-4 bg-primary-50 dark:bg-primary-800/30 rounded-xl flex flex-col items-center border border-primary-200 dark:border-primary-700">
+                        <div class="text-4xl mb-1">🥚</div>
+                        <div class="text-sm font-medium">雞蛋</div>
+                    </div>
+                    <div class="food-card p-4 bg-primary-50 dark:bg-primary-800/30 rounded-xl flex flex-col items-center border border-primary-200 dark:border-primary-700">
+                        <div class="text-4xl mb-1">🥕</div>
+                        <div class="text-sm font-medium">胡蘿蔔</div>
+                    </div>
+                </div>
+                
+                <!-- 自定義模型設置部分 -->
+                <div class="mt-8 pt-6 border-t-2 border-primary-100 dark:border-primary-800">
+                    <div class="flex items-start">
+                        <div class="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-full mr-3 flex-shrink-0">
+                            <i class="fas fa-cogs text-primary-600 dark:text-primary-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-xl text-slate-800 dark:text-slate-200 mb-1">自定義模型</h3>
+                            <p class="text-slate-600 dark:text-slate-400 mb-4">您可以輸入自己訓練的 Teachable Machine 影像模型來進行遊戲！</p>
+                            
+                            <!-- 移除開關按鈕，直接顯示輸入欄位 -->
+                            <div id="custom-model-fields" class="space-y-4">
+                                <div>
+                                    <label for="custom-model-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Teachable Machine 模型 URL
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="custom-model-url" 
+                                        placeholder="例如: https://teachablemachine.withgoogle.com/models/YOUR_MODEL_ID/" 
+                                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-slate-700 dark:text-white"
+                                        value="https://teachablemachine.withgoogle.com/models/xrzPvPeMK/"
+                                    >
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        請確保您的模型包含: 蘋果、橙子、雞蛋、胡蘿蔔的分類
+                                    </p>
+                                </div>
+                                
+                                <div class="bg-yellow-50 dark:bg-yellow-900/30 p-3 rounded-md text-yellow-800 dark:text-yellow-200 text-sm">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    <strong>提示:</strong> 您需要使用 Teachable Machine 訓練包含相同食物種類的模型，否則遊戲邏輯可能無法正常運作。
+                                </div>
+                            </div>
+                            
+                            <!-- 添加創建自己模型的鏈接 -->
+                            <div class="mt-4 text-sm text-primary-700 dark:text-primary-400">
+                                <a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center hover:underline">
+                                    <i class="fas fa-external-link-alt mr-1"></i>
+                                    前往 Teachable Machine 創建自己的模型
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 開始遊戲按鈕 -->
+            <button id="start-game-button" class="mt-4 bg-primary-500 hover:bg-primary-600 text-white text-2xl font-bold py-5 px-12 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500 focus:ring-opacity-50 transition btn-3d shadow-xl">
+                <i class="fas fa-play-circle mr-2"></i>開始遊戲
+            </button>
+            
+            <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">
+                <i class="fas fa-volume-up mr-1"></i>請確保已打開音效以獲得最佳體驗
+            </p>
+        </div>
+        
+        <!-- 裝飾性食物圖標 -->
+        <div class="absolute bottom-10 left-10 food-icon text-6xl animate-float">🍎</div>
+        <div class="absolute top-10 right-10 food-icon text-6xl animate-float" style="animation-delay: 0.5s;">🥚</div>
+        <div class="absolute bottom-20 right-20 food-icon text-6xl animate-float" style="animation-delay: 1s;">🍊</div>
+        <div class="absolute top-20 left-20 food-icon text-6xl animate-float" style="animation-delay: 1.5s;">🥕</div>
+    </div>
+    
+    <!-- 遊戲結束對話框 -->
+    <div id="game-over-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 relative overflow-hidden">
+            <div id="confetti-container" class="absolute inset-0 pointer-events-none"></div>
+            
+            <div class="text-center">
+                <div class="inline-block p-4 mb-4 rounded-full bg-accent-100 dark:bg-accent-900/40">
+                    <i id="result-icon" class="fas fa-trophy text-4xl text-accent-500"></i>
+                </div>
+                
+                <h2 id="modal-title" class="text-3xl font-extrabold mb-2 text-primary-700 dark:text-primary-300">遊戲結束</h2>
+                <p id="modal-message" class="text-lg mb-6">您的最終分數: <span id="final-score" class="font-bold text-2xl text-primary-600 dark:text-primary-400">0</span></p>
+                
+                <button id="restart-button" class="w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-4 px-8 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary-500 focus:ring-opacity-50 transition btn-3d text-lg">
+                    <i class="fas fa-redo mr-2"></i>再玩一次
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 音樂播放器 -->
+    <audio id="background-music" loop>
+        <source src="./audio/CausalMusic.mp3" type="audio/mp3">
+        您的瀏覽器不支持音訊元素。
+    </audio>
+
+    <script>
+        // 深色模式檢測
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+        
+        // 音樂控制
+        const backgroundMusic = document.getElementById('background-music');
+        
+        // Teachable Machine 模型 URL
+        const modelURL = "https://teachablemachine.withgoogle.com/models/xrzPvPeMK/";
+        const modelJSONURL = modelURL + "model.json";
+        const metadataURL = modelURL + "metadata.json";
+        
+        // 遊戲變數
+        let model, webcam, maxPredictions;
+        let isModelLoading = false;
+        let isCameraEnabled = false;
+        let gameStarted = false;
+        let gameTimer;
+        let timeLeft = 60;
+        let score = 0;
+        let targetScore = 50;
+        let currentPatientIndex = -1;
+        let detectedFood = null;
+        
+        // 病人名字和頭像數據 - 必須定義在前面
+        const patientGivenNames = ["英秀", "一心", "幼羚", "家寶", "有容", "念慈", "思賢", "向華", "修端", "允行"];
+        const patientSurnames = ["陳", "林", "黃", "張", "李", "王", "吳", "劉", "蔡", "楊"];
+        
+        // 名字與頭像映射
+        const patientAvatarMapping = {
+            "英秀": "./images/girl01.png",
+            "一心": "./images/girl02.png",
+            "幼羚": "./images/girl03.png",
+            "家寶": "./images/girl04.png",
+            "有容": "./images/girl05.png",
+            "念慈": "./images/boy01.png",
+            "思賢": "./images/boy02.png",
+            "向華": "./images/boy03.png",
+            "修端": "./images/boy04.png",
+            "允行": "./images/boy05.png"
+        };
+        
+        // 根據索引選擇名字 - 必須定義在前面
+        function getPatientNameByIndex(index) {
+            const nameIndex = index % patientGivenNames.length;
+            return patientGivenNames[nameIndex];
+        }
+        
+        // 生成頭像 URL - 必須定義在前面
+        function generateAvatarUrl(seed) {
+            const patientName = getPatientNameByIndex(seed - 1);
+            return patientAvatarMapping[patientName];
+        }
+        
+        // 食物資料 - 更新後的營養素信息
+        const foods = {
+            apple: {
+                name: "蘋果",
+                nutrients: ["維生素C", "鐵質"],
+                emoji: "🍎",
+                color: "bg-red-500",
+                icon: "fa-apple-alt"
+            },
+            orange: {
+                name: "橙子",
+                nutrients: ["維生素C"],
+                emoji: "🍊",
+                color: "bg-orange-500",
+                icon: "fa-lemon"
+            },
+            egg: {
+                name: "雞蛋",
+                nutrients: ["蛋白質", "維生素D"],
+                emoji: "🥚",
+                color: "bg-yellow-500",
+                icon: "fa-egg"
+            },
+            carrot: {
+                name: "胡蘿蔔",
+                nutrients: ["維生素A"],
+                emoji: "🥕",
+                color: "bg-amber-500",
+                icon: "fa-carrot"
+            },
+            background: {
+                name: "沒有食物",
+                nutrients: [],
+                emoji: "❓",
+                color: "bg-gray-500",
+                icon: "fa-question"
+            }
+        };
+        
+        // 疾病資料 - 更新後的疾病案例
+        const diseases = [
+            {
+                name: "壞血病",
+                description: "維生素C缺乏導致的疾病。症狀包括：牙齦出血、容易瘀傷、傷口癒合慢、疲勞和皮膚問題。",
+                remedies: ["apple", "orange"],
+                nutrients: ["維生素C"],
+                avatar: generateAvatarUrl(1),
+                icon: "fa-teeth",
+                symptomIcons: ["fa-tint", "fa-tired"]
+            },
+            {
+                name: "蛋白質缺乏症",
+                description: "因缺少必要蛋白質而導致的疾病。症狀包括：肌肉無力、生長遲緩、免疫力下降和疲勞。",
+                remedies: ["egg"],
+                nutrients: ["蛋白質"],
+                avatar: generateAvatarUrl(2),
+                icon: "fa-dumbbell",
+                symptomIcons: ["fa-child", "fa-shield-virus"]
+            },
+            {
+                name: "夜盲症",
+                description: "維生素A缺乏導致的視力問題。症狀包括：在昏暗光線下視力變差、眼睛乾澀和角膜軟化。",
+                remedies: ["carrot"],
+                nutrients: ["維生素A"],
+                avatar: generateAvatarUrl(3),
+                icon: "fa-eye",
+                symptomIcons: ["fa-low-vision", "fa-moon"]
+            },
+            {
+                name: "軟骨病",
+                description: "缺乏維生素D協助吸收鈣，令骨骼變得鬆化。",
+                remedies: ["egg"],
+                nutrients: ["維生素D"],
+                avatar: generateAvatarUrl(4),
+                icon: "fa-bone",
+                symptomIcons: ["fa-user-injured", "fa-child"]
+            },
+            {
+                name: "貧血症",
+                description: "鐵質缺乏導致的疾病。症狀包括：疲勞、虛弱、頭暈、注意力不集中和蒼白。",
+                remedies: ["apple"],
+                nutrients: ["鐵質"],
+                avatar: generateAvatarUrl(5),
+                icon: "fa-tint",
+                symptomIcons: ["fa-tired", "fa-dizzy"]
+            }
+        ];
+        
+        // DOM 元素
+        const coverPage = document.getElementById("cover-page");
+        const startGameButton = document.getElementById("start-game-button");
+        const webcamPlaceholder = document.getElementById("webcam-placeholder");
+        const webcamWrapper = document.getElementById("webcam-wrapper");
+        const loadingIndicator = document.getElementById("loading-indicator");
+        const enableCameraBtn = document.getElementById("enable-camera");
+        const disableCameraBtn = document.getElementById("disable-camera");
+        const submitFoodBtn = document.getElementById("submit-food");
+        const detectionResult = document.getElementById("detection-result");
+        const detectedFoodEl = document.getElementById("detected-food");
+        const detectedFoodEmoji = document.getElementById("detected-food-emoji");
+        const predictionResults = document.getElementById("prediction-results");
+        const errorContainer = document.getElementById("error-container");
+        const errorMessage = document.getElementById("error-message");
+        const gameMessage = document.getElementById("game-message");
+        const scoreDisplay = document.getElementById("score");
+        const timerDisplay = document.getElementById("timer");
+        const targetScoreDisplay = document.getElementById("target-score");
+        const patientName = document.getElementById("patient-name");
+        const patientCondition = document.getElementById("patient-condition");
+        const conditionText = document.getElementById("condition-text");
+        const patientDescription = document.getElementById("patient-description");
+        const patientAvatar = document.getElementById("patient-avatar");
+        const healthFill = document.getElementById("health-fill");
+        const neededFood = document.getElementById("needed-food");
+        const foodIcons = document.getElementById("food-icons");
+        const resultMessage = document.getElementById("result-message");
+        const gameOverModal = document.getElementById("game-over-modal");
+        const modalTitle = document.getElementById("modal-title");
+        const modalMessage = document.getElementById("modal-message");
+        const finalScore = document.getElementById("final-score");
+        const restartButton = document.getElementById("restart-button");
+        const resultIcon = document.getElementById("result-icon");
+        const detectionHighlight = document.getElementById("detection-highlight");
+        const symptomIcons = document.getElementById("symptom-icons");
+        const nutrientList = document.getElementById("nutrient-list");
+        
+        // 這個部分已被移至前面的代碼中，所以這裡刪除重複內容
+        
+        // 初始化模型和相機
+        async function init() {
+            try {
+                showLoading(true);
+                showError(false);
+                
+                // 載入模型和元數據
+                model = await tmImage.load(modelJSONURL, metadataURL);
+                maxPredictions = model.getTotalClasses();
+                
+                // 設置網絡攝像頭
+                const flip = true; // 是否翻轉相機
+                webcam = new tmImage.Webcam(400, 400, flip);
+                await webcam.setup();
+                
+                // 添加相機元素
+                webcamPlaceholder.classList.add("hidden");
+                webcamWrapper.classList.remove("hidden");
+                document.getElementById("webcam").replaceWith(webcam.canvas);
+                
+                // 設置預測結果 UI
+                createPredictionLabels();
+                
+                // 開始預測循環
+                webcam.play();
+                isCameraEnabled = true;
+                window.requestAnimationFrame(loop);
+                
+                // 更新按鈕狀態
+                enableCameraBtn.classList.add("hidden");
+                disableCameraBtn.classList.remove("hidden");
+                submitFoodBtn.classList.remove("hidden");
+                detectionResult.classList.remove("hidden");
+                
+                // 開始遊戲
+                if (!gameStarted) {
+                    startGame();
+                }
+            } catch (error) {
+                console.error("初始化錯誤:", error);
+                showError(true, "無法初始化模型或相機: " + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // 創建預測標籤元素 - 只顯示最高置信度的結果
+        function createPredictionLabels() {
+            predictionResults.innerHTML = "";
+            
+            // 創建單一信心指示器
+            const confidenceIndicator = document.createElement("div");
+            confidenceIndicator.classList.add("mt-2", "text-center");
+            
+            const confidenceLabel = document.createElement("p");
+            confidenceLabel.classList.add("text-sm", "font-medium", "text-slate-600", "dark:text-slate-400", "mb-2");
+            confidenceLabel.textContent = "辨識信心度";
+            confidenceIndicator.appendChild(confidenceLabel);
+            
+            const progressContainer = document.createElement("div");
+            progressContainer.classList.add("w-full", "bg-gray-200", "dark:bg-gray-700", "rounded-full", "h-3");
+            
+            const progressBar = document.createElement("div");
+            progressBar.id = "confidence-bar";
+            progressBar.classList.add("progress-bar", "bg-primary-500", "h-3", "rounded-full");
+            progressBar.style.width = "0%";
+            
+            progressContainer.appendChild(progressBar);
+            confidenceIndicator.appendChild(progressContainer);
+            
+            const percentText = document.createElement("p");
+            percentText.id = "confidence-value";
+            percentText.textContent = "0%";
+            percentText.classList.add("mt-1", "text-right", "font-bold", "text-primary-600", "dark:text-primary-400");
+            confidenceIndicator.appendChild(percentText);
+            
+            predictionResults.appendChild(confidenceIndicator);
+        }
+        
+        // 預測循環
+        async function loop() {
+            if (!isCameraEnabled) return;
+            
+            webcam.update();
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
+        
+        // 執行預測 - 簡化顯示
+        async function predict() {
+            try {
+                const prediction = await model.predict(webcam.canvas);
+                
+                let highestProb = 0;
+                let highestClass = null;
+                
+                for (let i = 0; i < maxPredictions; i++) {
+                    const classPrediction = prediction[i];
+                    
+                    if (classPrediction.probability > highestProb) {
+                        highestProb = classPrediction.probability;
+                        highestClass = classPrediction.className;
+                    }
+                }
+                
+                // 更新信心度顯示
+                const percent = Math.round(highestProb * 100);
+                document.getElementById("confidence-bar").style.width = `${percent}%`;
+                document.getElementById("confidence-value").textContent = `${percent}%`;
+                
+                // 根據不同閾值調整進度條顏色
+                const confidenceBar = document.getElementById("confidence-bar");
+                if (percent < 30) {
+                    confidenceBar.className = "progress-bar bg-red-500 h-3 rounded-full";
+                } else if (percent < 70) {
+                    confidenceBar.className = "progress-bar bg-yellow-500 h-3 rounded-full";
+                } else {
+                    confidenceBar.className = "progress-bar bg-green-500 h-3 rounded-full";
+                }
+                
+                // 僅當置信度大於 60% 時更新檢測結果
+                if (highestProb > 0.6 && highestClass !== "background") {
+                    detectedFood = highestClass;
+                    detectedFoodEl.textContent = foods[highestClass].name;
+                    detectedFoodEmoji.textContent = foods[highestClass].emoji;
+                    detectionHighlight.classList.remove("hidden");
+                } else if (highestClass === "background" && highestProb > 0.8) {
+                    detectedFood = "background";
+                    detectedFoodEl.textContent = "沒有食物";
+                    detectedFoodEmoji.textContent = "❓";
+                    detectionHighlight.classList.add("hidden");
+                }
+            } catch (error) {
+                console.error("預測過程中出錯:", error);
+            }
+        }
+        
+        // 開始遊戲
+        function startGame() {
+            gameStarted = true;
+            score = 0;
+            timeLeft = 60;
+            updateScore();
+            updateTimer();
+            
+            // 顯示第一個患者
+            nextPatient();
+            
+            // 設置遊戲計時器
+            gameTimer = setInterval(() => {
+                timeLeft--;
+                updateTimer();
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+            
+            gameMessage.innerHTML = `
+                <p class="flex items-center justify-center">
+                    <i class="fas fa-play-circle text-primary-600 dark:text-primary-400 mr-2 text-xl"></i>
+                    <span>遊戲開始！找出患者需要的食物，幫助他們恢復健康吧！</span>
+                </p>
+            `;
+        }
+        
+        // 更新分數顯示
+        function updateScore() {
+            scoreDisplay.textContent = score;
+        }
+        
+        // 更新計時器顯示
+        function updateTimer() {
+            timerDisplay.textContent = timeLeft;
+        }
+        
+        // 顯示下一個患者
+        function nextPatient() {
+            // 隨機選擇患者
+            const newIndex = Math.floor(Math.random() * diseases.length);
+            currentPatientIndex = newIndex;
+            const patient = diseases[currentPatientIndex];
+            
+            // 生成患者名稱，確保名字和頭像匹配
+            const patientGivenName = getPatientNameByIndex(currentPatientIndex);
+            const surname = ["陳", "林", "黃", "張", "李", "王", "吳", "劉", "蔡", "楊"][Math.floor(Math.random() * 10)];
+            const fullName = surname + patientGivenName;
+            
+            // 更新患者資訊
+            patientName.textContent = fullName;
+            conditionText.textContent = patient.name;
+            patientDescription.textContent = patient.description;
+            patientAvatar.src = patientAvatarMapping[patientGivenName];
+            
+            // 更新症狀圖標
+            symptomIcons.innerHTML = '';
+            if (patient.symptomIcons) {
+                patient.symptomIcons.forEach(icon => {
+                    const iconEl = document.createElement('i');
+                    iconEl.className = `fas ${icon} text-red-500 dark:text-red-400 text-xl ml-1`;
+                    symptomIcons.appendChild(iconEl);
+                });
+            }
+            
+            // 更新營養素列表
+            nutrientList.innerHTML = '';
+            if (patient.nutrients) {
+                patient.nutrients.forEach(nutrient => {
+                    const pill = document.createElement('div');
+                    pill.className = 'inline-flex items-center bg-secondary-100 dark:bg-secondary-900 text-secondary-800 dark:text-secondary-200 px-3 py-1.5 rounded-full text-sm font-bold border border-secondary-200 dark:border-secondary-800';
+                    pill.innerHTML = `<i class="fas fa-capsules mr-1.5"></i>${nutrient}`;
+                    nutrientList.appendChild(pill);
+                });
+            }
+            
+            // 重置健康條
+            healthFill.style.width = "30%";
+            
+            // 隱藏食物建議和結果
+            neededFood.classList.add("hidden");
+            foodIcons.innerHTML = "";
+            resultMessage.classList.add("hidden");
+            
+            // 重新啟用提交按鈕
+            submitFoodBtn.disabled = false;
+            submitFoodBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+        
+        // 生成隨機病人名稱
+        function generatePatientName() {
+            const surnames = ["陳", "林", "黃", "張", "李", "王", "吳", "劉", "蔡", "楊"];
+            const givenNames = ["英秀", "一心", "幼羚", "家寶", "念慈", "思賢", "有容", "向華", "修端", "允行"];
+            
+            return surnames[Math.floor(Math.random() * surnames.length)] + givenNames[Math.floor(Math.random() * givenNames.length)];
+        }
+        
+        // 提交食物
+        function submitFood() {
+            if (!gameStarted || !detectedFood) return;
+            
+            const patient = diseases[currentPatientIndex];
+            const correctFoods = patient.remedies;
+            
+            // 檢查是否提供正確的食物
+            if (correctFoods.includes(detectedFood)) {
+                // 防止重複提交得分 - 禁用提交按鈕
+                submitFoodBtn.disabled = true;
+                submitFoodBtn.classList.add("opacity-50", "cursor-not-allowed");
+                
+                // 正確答案時才顯示建議食物
+                neededFood.classList.remove("hidden");
+                foodIcons.innerHTML = "";
+                
+                correctFoods.forEach(food => {
+                    const foodDiv = document.createElement("div");
+                    foodDiv.className = "food-icon-container flex flex-col items-center";
+                    
+                    const foodEmoji = document.createElement("span");
+                    foodEmoji.textContent = foods[food].emoji;
+                    foodEmoji.classList.add("text-4xl");
+                    
+                    const foodName = document.createElement("span");
+                    foodName.textContent = foods[food].name;
+                    foodName.className = "text-sm font-medium mt-1";
+                    
+                    foodDiv.appendChild(foodEmoji);
+                    foodDiv.appendChild(foodName);
+                    
+                    foodIcons.appendChild(foodDiv);
+                });
+                
+                // 創建五彩紙屑效果
+                createConfetti();
+                
+                // 正確的食物
+                score += 10;
+                updateScore();
+                
+                // 更新健康條
+                healthFill.style.width = "90%";
+                
+                resultMessage.classList.remove("hidden");
+                resultMessage.innerHTML = `
+                    <div class="p-4 rounded-xl bg-green-100 dark:bg-green-900/40 border-2 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 relative overflow-hidden">
+                        <span class="absolute right-0 bottom-0 text-5xl opacity-20">🎉</span>
+                        <h4 class="font-bold text-lg flex items-center">
+                            <i class="fas fa-check-circle mr-2"></i>太棒了！
+                        </h4>
+                        <p class="mt-1">${foods[detectedFood].name}是正確的食物！患者的健康狀況得到了改善。</p>
+                        <div class="mt-3 flex items-center">
+                            <div class="bg-white dark:bg-slate-800 px-3 py-1 rounded-full text-sm font-bold text-primary-600 dark:text-primary-400">
+                                <i class="fas fa-plus mr-1"></i>10分
+                            </div>
+                            <div class="animate-bounce ml-2">
+                                <i class="fas fa-thumbs-up text-xl text-green-600 dark:text-green-400"></i>
+                            </div>
+                        </div>
+                        <p class="mt-3 text-sm">
+                            <i class="fas fa-hourglass-half mr-1"></i>
+                            <span id="next-timer">3</span> 秒後進入下一題...
+                        </p>
+                    </div>
+                `;
+                
+                // 顯示倒數計時
+                let countdown = 3;
+                const timerElement = document.getElementById("next-timer");
+                const countdownInterval = setInterval(() => {
+                    countdown--;
+                    if (timerElement) {
+                        timerElement.textContent = countdown;
+                    }
+                }, 1000);
+                
+                // 檢查是否達到目標分數
+                if (score >= targetScore) {
+                    clearInterval(countdownInterval);
+                    endGame(true);
+                    return;
+                }
+                
+                // 3秒後顯示下一個患者
+                setTimeout(() => {
+                    clearInterval(countdownInterval);
+                    nextPatient();
+                }, 3000);
+            } else {
+                // 錯誤的食物 - 確保建議食物區域保持隱藏
+                neededFood.classList.add("hidden");
+                
+                resultMessage.classList.remove("hidden");
+                resultMessage.innerHTML = `
+                    <div class="p-4 rounded-xl bg-red-100 dark:bg-red-900/40 border-2 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200">
+                        <h4 class="font-bold text-lg flex items-center">
+                            <i class="fas fa-times-circle mr-2"></i>嘗試別的食物！
+                        </h4>
+                        <p class="mt-1">${detectedFood === "background" ? "請先展示一種食物" : foods[detectedFood].name + "不是正確的食物"}。患者需要能補充${patient.nutrients.join('和')}的食物。</p>
+                        <div class="mt-2 animate-pulse">
+                            <i class="fas fa-redo text-red-600 dark:text-red-400 mr-1"></i>
+                            <span class="text-sm font-medium">再試一次</span>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // 創建五彩紙屑效果
+        function createConfetti() {
+            const container = document.getElementById('confetti-container');
+            container.innerHTML = '';
+            
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.width = Math.random() * 8 + 5 + 'px';
+                confetti.style.height = Math.random() * 4 + 5 + 'px';
+                confetti.style.animationDuration = Math.random() * 2 + 2 + 's';
+                container.appendChild(confetti);
+            }
+        }
+        
+        // 結束遊戲
+        function endGame(isWin = false) {
+            clearInterval(gameTimer);
+            gameStarted = false;
+            
+            // 停止背景音樂
+            backgroundMusic.pause();
+            
+            finalScore.textContent = score;
+            
+            if (isWin) {
+                createConfetti();
+                resultIcon.className = "fas fa-crown text-4xl text-yellow-500 animate-pulse";
+                modalTitle.textContent = "恭喜你！";
+                modalMessage.innerHTML = `你成功治療了所有患者！<br><span class="text-sm text-gray-600 dark:text-gray-400">最終分數：</span><span id="final-score" class="font-bold text-3xl text-primary-600 dark:text-primary-400">${score}</span>`;
+            } else {
+                resultIcon.className = "fas fa-hourglass-end text-4xl text-accent-500";
+                modalTitle.textContent = "時間到";
+                
+                if (score >= targetScore) {
+                    createConfetti();
+                    modalMessage.innerHTML = `你成功達成目標分數！<br><span class="text-sm text-gray-600 dark:text-gray-400">最終分數：</span><span id="final-score" class="font-bold text-3xl text-primary-600 dark:text-primary-400">${score}</span>`;
+                } else {
+                    modalMessage.innerHTML = `再接再厲！<br><span class="text-sm text-gray-600 dark:text-gray-400">最終分數：</span><span id="final-score" class="font-bold text-3xl text-primary-600 dark:text-primary-400">${score}</span>`;
+                }
+            }
+            
+            gameOverModal.classList.remove("hidden");
+        }
+        
+        // 重新開始遊戲
+        function restartGame() {
+            gameOverModal.classList.add("hidden");
+            
+            // 如果相機已開啟，直接重新開始遊戲
+            if (isCameraEnabled) {
+                startGame();
+                // 重新播放背景音樂
+                try {
+                    backgroundMusic.currentTime = 0;
+                    backgroundMusic.play();
+                } catch (error) {
+                    console.error("無法播放背景音樂:", error);
+                }
+            } else {
+                gameMessage.innerHTML = `
+                    <p class="flex items-center justify-center">
+                        <i class="fas fa-info-circle text-primary-600 dark:text-primary-400 mr-2 text-xl"></i>
+                        <span>遊戲將在您開啟相機後開始。請對著相機展示適合患者的食物！</span>
+                    </p>
+                `;
+                // 自動啟動相機
+                init();
+            }
+        }
+        
+        // 創建過場動畫元素
+        const transitionScreen = document.createElement("div");
+        transitionScreen.className = "fixed inset-0 bg-primary-500 flex items-center justify-center z-[60] transition-opacity duration-1000";
+        transitionScreen.style.opacity = "0";
+        transitionScreen.style.pointerEvents = "none";
+        
+        const transitionContent = document.createElement("div");
+        transitionContent.className = "text-center";
+        
+        const loadingIcon = document.createElement("div");
+        loadingIcon.className = "inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-white mb-4";
+        
+        const loadingText = document.createElement("p");
+        loadingText.className = "text-white text-xl font-bold";
+        loadingText.textContent = "正在準備遊戲...";
+        
+        transitionContent.appendChild(loadingIcon);
+        transitionContent.appendChild(loadingText);
+        transitionScreen.appendChild(transitionContent);
+        document.body.appendChild(transitionScreen);
+        
+        // 獲取自定義模型輸入欄位
+        const customModelUrl = document.getElementById('custom-model-url');
+        
+        // 封面頁面開始遊戲按鈕事件 - 添加過場效果
+        startGameButton.addEventListener("click", async () => {
+            // 獲取輸入欄位中的模型URL
+            const customUrl = customModelUrl.value.trim();
+            if (customUrl) {
+                // 更新模型URL
+                const updatedModelURL = customUrl.endsWith('/') ? customUrl : customUrl + '/';
+                // 更新全局變量
+                modelURL = updatedModelURL;
+                modelJSONURL = modelURL + "model.json";
+                metadataURL = modelURL + "metadata.json";
+            }
+            
+            // 播放背景音樂
+            try {
+                await backgroundMusic.play();
+            } catch (error) {
+                console.error("無法播放背景音樂:", error);
+                // 音樂播放失敗不影響遊戲進行
+            }
+            
+            // 顯示過場動畫
+            transitionScreen.style.opacity = "1";
+            transitionScreen.style.pointerEvents = "auto";
+            transitionScreen.style.display = "flex";
+            
+            // 延遲隱藏封面頁面以製造轉場效果
+            setTimeout(() => {
+                coverPage.classList.add("hidden");
+            }, 500);
+            
+            // 自動啟動遊戲和相機
+            if (!isModelLoading) {
+                isModelLoading = true;
+                try {
+                    await init();
+                } catch (error) {
+                    console.error("模型載入錯誤:", error);
+                    showError(true, "無法載入指定的模型: " + error.message + "。請確保URL正確且包含有效的Teachable Machine模型。");
+                    
+                    // 嘗試回退到默認模型
+                    showError(true, "自定義模型載入失敗，正在嘗試使用默認模型...");
+                    
+                    // 重置為默認模型
+                    modelURL = "https://teachablemachine.withgoogle.com/models/xrzPvPeMK/";
+                    modelJSONURL = modelURL + "model.json";
+                    metadataURL = modelURL + "metadata.json";
+                    
+                    // 再次嘗試初始化
+                    setTimeout(async () => {
+                        try {
+                            await init();
+                        } catch (fallbackError) {
+                            console.error("默認模型也無法載入:", fallbackError);
+                            showError(true, "無法載入任何模型。請檢查您的網絡連接或刷新頁面重試。");
+                        }
+                    }, 1000);
+                } finally {
+                    // 載入完成後，淡出過場動畫
+                    transitionScreen.style.opacity = "0";
+                    transitionScreen.style.pointerEvents = "none";
+                    
+                    isModelLoading = false;
+                }
+            }
+        });
+        
+        // 啟用/停用相機
+        enableCameraBtn.addEventListener("click", async () => {
+            if (isModelLoading) return;
+            
+            if (!model) {
+                isModelLoading = true;
+                await init();
+                isModelLoading = false;
+            } else {
+                webcamPlaceholder.classList.add("hidden");
+                webcamWrapper.classList.remove("hidden");
+                webcam.play();
+                isCameraEnabled = true;
+                window.requestAnimationFrame(loop);
+                
+                enableCameraBtn.classList.add("hidden");
+                disableCameraBtn.classList.remove("hidden");
+                submitFoodBtn.classList.remove("hidden");
+                detectionResult.classList.remove("hidden");
+                
+                if (!gameStarted) {
+                    startGame();
+                }
+            }
+        });
+        
+        disableCameraBtn.addEventListener("click", () => {
+            webcam.stop();
+            isCameraEnabled = false;
+            
+            webcamPlaceholder.classList.remove("hidden");
+            webcamWrapper.classList.add("hidden");
+            
+            enableCameraBtn.classList.remove("hidden");
+            disableCameraBtn.classList.add("hidden");
+            submitFoodBtn.classList.add("hidden");
+            
+            // 暫停遊戲
+            if (gameStarted) {
+                clearInterval(gameTimer);
+                gameStarted = false;
+                gameMessage.innerHTML = `
+                    <p class="flex items-center justify-center">
+                        <i class="fas fa-pause-circle text-primary-600 dark:text-primary-400 mr-2 text-xl"></i>
+                        <span>遊戲已暫停。請重新開啟相機繼續遊戲。</span>
+                    </p>
+                `;
+            }
+        });
+        
+        // 提交食物
+        submitFoodBtn.addEventListener("click", submitFood);
+        
+        // 重新開始遊戲
+        restartButton.addEventListener("click", restartGame);
+        
+        // 輔助函數
+        function showLoading(show) {
+            if (show) {
+                loadingIndicator.classList.remove("hidden");
+            } else {
+                loadingIndicator.classList.add("hidden");
+            }
+        }
+        
+        function showError(show, message = "") {
+            if (show) {
+                errorContainer.classList.remove("hidden");
+                errorMessage.textContent = message;
+            } else {
+                errorContainer.classList.add("hidden");
+                errorMessage.textContent = "";
+            }
+        }
+    </script>
+</body>
+</html>
