@@ -1016,9 +1016,54 @@
                 
                 updateLoadingProgress("一切就緒!", 100);
                 
-                // 開始遊戲
-                if (!gameStarted) {
-                    startGame();
+                // 添加重要日誌
+                console.log("準備執行最終步驟: 隱藏加載畫面，開始遊戲");
+                
+                // 確保轉場屏幕隱藏
+                try {
+                    // 添加進度提示並延遲操作
+                    setTimeout(() => {
+                        console.log("執行轉場結束操作");
+                        
+                        // 強制隱藏轉場畫面
+                        transitionScreen.style.opacity = "0";
+                        transitionScreen.style.display = "none";
+                        transitionScreen.style.pointerEvents = "none";
+                        
+                        // 強制隱藏封面
+                        coverContainer.classList.add("hidden");
+                        
+                        console.log("轉場畫面已隱藏");
+                        
+                        // 強制顯示遊戲界面
+                        document.querySelector(".game-container").style.display = "block";
+                        
+                        console.log("遊戲界面已顯示");
+                        
+                        // 確保加載指示器隱藏
+                        showLoading(false);
+                        
+                        // 開始遊戲
+                        if (!gameStarted) {
+                            console.log("啟動遊戲邏輯");
+                            try {
+                                startGame();
+                                console.log("遊戲邏輯啟動成功");
+                            } catch (gameError) {
+                                console.error("遊戲啟動錯誤:", gameError);
+                                alert("遊戲啟動錯誤: " + gameError.message);
+                                
+                                // 添加緊急恢復按鈕
+                                addEmergencyButton();
+                            }
+                        }
+                    }, 1000); // 給足夠時間讓瀏覽器渲染完成
+                } catch (transitionError) {
+                    console.error("轉場錯誤:", transitionError);
+                    alert("轉場錯誤，請嘗試刷新頁面");
+                    
+                    // 添加緊急恢復按鈕
+                    addEmergencyButton();
                 }
             } catch (error) {
                 console.error("初始化錯誤 (詳細):", error);
@@ -1468,6 +1513,42 @@
             modelSetupPage.classList.remove('hidden');
         });
         
+        // 添加緊急恢復按鈕函數
+        function addEmergencyButton() {
+            // 確保之前沒有創建過緊急按鈕
+            if (!document.getElementById('emergency-continue')) {
+                const emergencyBtn = document.createElement('button');
+                emergencyBtn.id = 'emergency-continue';
+                emergencyBtn.className = 'fixed bottom-4 right-4 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full shadow-lg z-[100] animate-pulse';
+                emergencyBtn.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>強制繼續';
+                
+                emergencyBtn.addEventListener('click', () => {
+                    // 強制隱藏所有加載和過渡界面
+                    transitionScreen.style.opacity = "0";
+                    transitionScreen.style.display = "none";
+                    coverContainer.classList.add("hidden");
+                    showLoading(false);
+                    
+                    // 強制顯示遊戲界面
+                    document.querySelector(".game-container").style.display = "block";
+                    
+                    // 啟動遊戲邏輯
+                    if (!gameStarted) {
+                        try {
+                            startGame();
+                        } catch (e) {
+                            console.error("緊急啟動遊戲失敗:", e);
+                        }
+                    }
+                    
+                    // 移除按鈕自身
+                    emergencyBtn.remove();
+                });
+                
+                document.body.appendChild(emergencyBtn);
+            }
+        }
+        
         // 開始遊戲按鈕事件 - 添加URL驗證和錯誤處理
         startGameButton.addEventListener("click", async () => {
             // 獲取輸入欄位中的模型URL
@@ -1497,6 +1578,14 @@
             transitionScreen.style.opacity = "1";
             transitionScreen.style.pointerEvents = "auto";
             transitionScreen.style.display = "flex";
+            
+            // 添加緊急恢復按鈕 (5秒後出現)
+            setTimeout(() => {
+                // 如果仍在加載階段，顯示緊急按鈕
+                if (transitionScreen.style.opacity !== "0") {
+                    addEmergencyButton();
+                }
+            }, 10000);
             
             // 嘗試初始化模型和相機
             if (!isModelLoading) {
