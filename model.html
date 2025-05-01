@@ -922,22 +922,79 @@
         
         // 這個部分已被移至前面的代碼中，所以這裡刪除重複內容
         
-        // 初始化模型和相機
+        // 初始化模型和相機 - 添加詳細進度報告
         async function init() {
             try {
                 showLoading(true);
                 showError(false);
+                updateLoadingProgress("初始化中...", 0);
                 
-                // 載入模型和元數據
-                model = await tmImage.load(modelJSONURL, metadataURL);
-                maxPredictions = model.getTotalClasses();
+                // 載入TensorFlow.js，確保庫正確加載
+                try {
+                    updateLoadingProgress("檢查TensorFlow.js...", 5);
+                    if (typeof tf === 'undefined') {
+                        throw new Error("TensorFlow.js 未正確載入");
+                    }
+                    console.log("TensorFlow.js版本:", tf.version.tfjs);
+                    updateLoadingProgress("TensorFlow.js 已就緒", 10);
+                } catch (tfError) {
+                    console.error("TensorFlow.js載入失敗:", tfError);
+                    throw new Error("TensorFlow.js 載入失敗: " + tfError.message);
+                }
+                
+                // 檢查Teachable Machine庫
+                try {
+                    updateLoadingProgress("檢查Teachable Machine庫...", 15);
+                    if (typeof tmImage === 'undefined') {
+                        throw new Error("Teachable Machine 庫未正確載入");
+                    }
+                    updateLoadingProgress("Teachable Machine 已就緒", 20);
+                } catch (tmError) {
+                    console.error("Teachable Machine庫載入失敗:", tmError);
+                    throw new Error("Teachable Machine 庫載入失敗: " + tmError.message);
+                }
+                
+                // 顯示使用的模型URL（調試用）
+                console.log("正在嘗試載入模型:", modelJSONURL);
+                updateLoadingProgress("正在連接模型...", 25);
+                
+                // 載入模型和元數據（帶超時）
+                try {
+                    updateLoadingProgress("正在下載模型...", 30);
+                    
+                    // 定義帶超時的模型載入Promise
+                    const loadModelPromise = tmImage.load(modelJSONURL, metadataURL);
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error("模型載入超時，請檢查網絡連接或模型URL")), 30000)); // 30秒超時
+                    
+                    // 使用Promise.race在兩者之間競爭
+                    model = await Promise.race([loadModelPromise, timeoutPromise]);
+                    
+                    console.log("模型載入完成!");
+                    maxPredictions = model.getTotalClasses();
+                    console.log("模型類別數量:", maxPredictions);
+                    console.log("模型類別:", model.getClassLabels ? model.getClassLabels() : "無法獲取類別名稱");
+                    
+                    updateLoadingProgress("模型載入完成", 60);
+                } catch (modelError) {
+                    console.error("模型載入失敗:", modelError);
+                    throw new Error("模型載入失敗: " + modelError.message);
+                }
                 
                 // 設置網絡攝像頭
-                const flip = true; // 是否翻轉相機
-                webcam = new tmImage.Webcam(400, 400, flip);
-                await webcam.setup();
+                try {
+                    updateLoadingProgress("正在初始化相機...", 70);
+                    const flip = true; // 是否翻轉相機
+                    webcam = new tmImage.Webcam(400, 400, flip);
+                    await webcam.setup();
+                    updateLoadingProgress("相機設置完成", 85);
+                } catch (cameraError) {
+                    console.error("相機設置失敗:", cameraError);
+                    throw new Error("相機設置失敗: " + cameraError.message);
+                }
                 
                 // 添加相機元素
+                updateLoadingProgress("正在準備介面...", 90);
                 webcamPlaceholder.classList.add("hidden");
                 webcamWrapper.classList.remove("hidden");
                 document.getElementById("webcam").replaceWith(webcam.canvas);
@@ -946,6 +1003,7 @@
                 createPredictionLabels();
                 
                 // 開始預測循環
+                updateLoadingProgress("啟動視覺辨識...", 95);
                 webcam.play();
                 isCameraEnabled = true;
                 window.requestAnimationFrame(loop);
@@ -956,15 +1014,47 @@
                 submitFoodBtn.classList.remove("hidden");
                 detectionResult.classList.remove("hidden");
                 
+                updateLoadingProgress("一切就緒!", 100);
+                
                 // 開始遊戲
                 if (!gameStarted) {
                     startGame();
                 }
             } catch (error) {
-                console.error("初始化錯誤:", error);
-                showError(true, "無法初始化模型或相機: " + error.message);
+                console.error("初始化錯誤 (詳細):", error);
+                showError(true, "初始化失敗: " + error.message);
+                alert("遊戲初始化失敗。錯誤信息: " + error.message);
             } finally {
                 showLoading(false);
+            }
+        }
+        
+        // 更新載入進度的輔助函數
+        function updateLoadingProgress(statusText, percentComplete) {
+            // 更新加載文本
+            loadingText.textContent = statusText;
+            
+            // 更新控制台日誌（幫助調試）
+            console.log(`載入進度: ${percentComplete}% - ${statusText}`);
+            
+            // 添加進度指示器（如果尚不存在）
+            let progressBar = document.getElementById('loading-progress-bar');
+            if (!progressBar && loadingIndicator) {
+                const progressContainer = document.createElement('div');
+                progressContainer.className = 'w-64 bg-gray-200 rounded-full h-2.5 mt-2';
+                
+                progressBar = document.createElement('div');
+                progressBar.id = 'loading-progress-bar';
+                progressBar.className = 'bg-primary-600 h-2.5 rounded-full';
+                progressBar.style.width = '0%';
+                
+                progressContainer.appendChild(progressBar);
+                loadingIndicator.appendChild(progressContainer);
+            }
+            
+            // 更新進度條
+            if (progressBar) {
+                progressBar.style.width = `${percentComplete}%`;
             }
         }
         
