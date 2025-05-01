@@ -743,10 +743,10 @@
         // 音樂控制
         const backgroundMusic = document.getElementById('background-music');
         
-        // Teachable Machine 模型 URL - 使用默認值，但只在未指定自定義URL時使用
-        let modelURL = "https://teachablemachine.withgoogle.com/models/xrzPvPeMK/";
-        let modelJSONURL = modelURL + "model.json";
-        let metadataURL = modelURL + "metadata.json";
+        // Teachable Machine 模型 URL - 初始化為空，必須由用戶提供
+        let modelURL = "";
+        let modelJSONURL = "";
+        let metadataURL = "";
         
         // 遊戲變數
         let model, webcam, maxPredictions;
@@ -1378,18 +1378,22 @@
             modelSetupPage.classList.remove('hidden');
         });
         
-        // 開始遊戲按鈕事件 - 添加過場效果
+        // 開始遊戲按鈕事件 - 添加URL驗證和錯誤處理
         startGameButton.addEventListener("click", async () => {
             // 獲取輸入欄位中的模型URL
             const customUrl = customModelUrl.value.trim();
-            if (customUrl) {
-                // 更新模型URL
-                const updatedModelURL = customUrl.endsWith('/') ? customUrl : customUrl + '/';
-                // 更新全局變量
-                modelURL = updatedModelURL;
-                modelJSONURL = modelURL + "model.json";
-                metadataURL = modelURL + "metadata.json";
+            if (!customUrl) {
+                // 顯示錯誤並返回模型設置頁面
+                showModelUrlError("請輸入 Teachable Machine 模型 URL");
+                return;
             }
+            
+            // 更新模型URL
+            const updatedModelURL = customUrl.endsWith('/') ? customUrl : customUrl + '/';
+            // 更新全局變量
+            modelURL = updatedModelURL;
+            modelJSONURL = modelURL + "model.json";
+            metadataURL = modelURL + "metadata.json";
             
             // 播放背景音樂
             try {
@@ -1404,46 +1408,63 @@
             transitionScreen.style.pointerEvents = "auto";
             transitionScreen.style.display = "flex";
             
-            // 延遲隱藏封面頁面以製造轉場效果
-            setTimeout(() => {
-                coverContainer.classList.add("hidden");
-            }, 500);
-            
-            // 自動啟動遊戲和相機
+            // 嘗試初始化模型和相機
             if (!isModelLoading) {
                 isModelLoading = true;
                 try {
                     await init();
+                    
+                    // 成功加載模型後，隱藏封面頁面
+                    setTimeout(() => {
+                        coverContainer.classList.add("hidden");
+                    }, 500);
+                    
                 } catch (error) {
                     console.error("模型載入錯誤:", error);
-                    showError(true, "無法載入指定的模型: " + error.message + "。請確保URL正確且包含有效的Teachable Machine模型。");
                     
-                    // 嘗試回退到默認模型
-                    showError(true, "自定義模型載入失敗，正在嘗試使用默認模型...");
-                    
-                    // 重置為默認模型
-                    modelURL = "https://teachablemachine.withgoogle.com/models/xrzPvPeMK/";
-                    modelJSONURL = modelURL + "model.json";
-                    metadataURL = modelURL + "metadata.json";
-                    
-                    // 再次嘗試初始化
-                    setTimeout(async () => {
-                        try {
-                            await init();
-                        } catch (fallbackError) {
-                            console.error("默認模型也無法載入:", fallbackError);
-                            showError(true, "無法載入任何模型。請檢查您的網絡連接或刷新頁面重試。");
-                        }
-                    }, 1000);
-                } finally {
-                    // 載入完成後，淡出過場動畫
+                    // 淡出過場動畫
                     transitionScreen.style.opacity = "0";
                     transitionScreen.style.pointerEvents = "none";
                     
+                    // 跳回模型設置頁面並顯示錯誤
+                    gameInstructionPage.classList.add('hidden');
+                    modelSetupPage.classList.remove('hidden');
+                    
+                    showModelUrlError("無法載入指定的模型: " + error.message + "。請確保URL正確且包含有效的Teachable Machine模型。");
+                } finally {
                     isModelLoading = false;
                 }
             }
         });
+        
+        // 顯示模型URL錯誤訊息
+        function showModelUrlError(message) {
+            // 檢查是否已存在錯誤訊息元素
+            let errorElement = document.getElementById('model-url-error');
+            
+            if (!errorElement) {
+                // 創建錯誤訊息元素
+                errorElement = document.createElement('div');
+                errorElement.id = 'model-url-error';
+                errorElement.className = 'mt-2 bg-red-100 dark:bg-red-900/30 p-3 rounded-md text-red-800 dark:text-red-200 text-sm';
+                
+                // 插入到URL輸入欄位後面
+                const inputContainer = customModelUrl.parentElement;
+                inputContainer.appendChild(errorElement);
+            }
+            
+            // 更新錯誤訊息
+            errorElement.innerHTML = `<i class="fas fa-exclamation-circle mr-1"></i>${message}`;
+            
+            // 添加輸入框紅色邊框
+            customModelUrl.classList.add('border-red-500', 'dark:border-red-700');
+            
+            // 當用戶開始輸入時移除錯誤樣式
+            customModelUrl.addEventListener('input', function() {
+                this.classList.remove('border-red-500', 'dark:border-red-700');
+                errorElement.innerHTML = '';
+            }, { once: true });
+        }
         
         // 啟用/停用相機
         enableCameraBtn.addEventListener("click", async () => {
