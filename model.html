@@ -577,17 +577,13 @@
                                     id="custom-model-url" 
                                     placeholder="例如: https://teachablemachine.withgoogle.com/models/YOUR_MODEL_ID/" 
                                     class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-slate-700 dark:text-white"
-                                    value="https://teachablemachine.withgoogle.com/models/xrzPvPeMK/"
                                 >
-                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 text-left">
-                                    <i class="fas fa-info-circle mr-1"></i>
-                                    請確保您的模型包含: 蘋果、橙子、雞蛋、胡蘿蔔的分類
-                                </p>
+
                             </div>
                             
                             <div class="bg-yellow-50 dark:bg-yellow-900/30 p-3 rounded-md text-yellow-800 dark:text-yellow-200 text-sm">
                                 <i class="fas fa-exclamation-triangle mr-1"></i>
-                                <strong>提示:</strong> 您需要使用 Teachable Machine 訓練包含相同食物種類的模型，否則遊戲邏輯可能無法正常運作。
+                                <strong>提示:</strong> 您需要使用 Teachable Machine 訓練一個包含 apple、orange、egg、carrot、background 五個標籤的模型，否則遊戲邏輯可能無法正常運作。
                             </div>
                         </div>
                         
@@ -747,7 +743,7 @@
         // 音樂控制
         const backgroundMusic = document.getElementById('background-music');
         
-        // Teachable Machine 模型 URL
+        // Teachable Machine 模型 URL - 使用默認值，但只在未指定自定義URL時使用
         let modelURL = "https://teachablemachine.withgoogle.com/models/xrzPvPeMK/";
         let modelJSONURL = modelURL + "model.json";
         let metadataURL = modelURL + "metadata.json";
