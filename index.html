@@ -588,6 +588,52 @@
                         <div class="text-sm font-medium">胡蘿蔔</div>
                     </div>
                 </div>
+                
+                <!-- 自定義模型設置部分 -->
+                <div class="mt-8 pt-6 border-t-2 border-primary-100 dark:border-primary-800">
+                    <div class="flex items-start">
+                        <div class="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-full mr-3 flex-shrink-0">
+                            <i class="fas fa-cogs text-primary-600 dark:text-primary-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-xl text-slate-800 dark:text-slate-200 mb-1">自定義模型</h3>
+                            <p class="text-slate-600 dark:text-slate-400 mb-4">您可以輸入自己訓練的 Teachable Machine 影像模型來進行遊戲！</p>
+                            
+                            <!-- 移除開關按鈕，直接顯示輸入欄位 -->
+                            <div id="custom-model-fields" class="space-y-4">
+                                <div>
+                                    <label for="custom-model-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Teachable Machine 模型 URL
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="custom-model-url" 
+                                        placeholder="例如: https://teachablemachine.withgoogle.com/models/YOUR_MODEL_ID/" 
+                                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-slate-700 dark:text-white"
+                                        value="https://teachablemachine.withgoogle.com/models/xrzPvPeMK/"
+                                    >
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        請確保您的模型包含: 蘋果、橙子、雞蛋、胡蘿蔔的分類
+                                    </p>
+                                </div>
+                                
+                                <div class="bg-yellow-50 dark:bg-yellow-900/30 p-3 rounded-md text-yellow-800 dark:text-yellow-200 text-sm">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    <strong>提示:</strong> 您需要使用 Teachable Machine 訓練包含相同食物種類的模型，否則遊戲邏輯可能無法正常運作。
+                                </div>
+                            </div>
+                            
+                            <!-- 添加創建自己模型的鏈接 -->
+                            <div class="mt-4 text-sm text-primary-700 dark:text-primary-400">
+                                <a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center hover:underline">
+                                    <i class="fas fa-external-link-alt mr-1"></i>
+                                    前往 Teachable Machine 創建自己的模型
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <!-- 開始遊戲按鈕 -->
@@ -651,9 +697,9 @@
         const backgroundMusic = document.getElementById('background-music');
         
         // Teachable Machine 模型 URL
-        const modelURL = "https://teachablemachine.withgoogle.com/models/xrzPvPeMK/";
-        const modelJSONURL = modelURL + "model.json";
-        const metadataURL = modelURL + "metadata.json";
+        let modelURL = "https://teachablemachine.withgoogle.com/models/xrzPvPeMK/";
+        let modelJSONURL = modelURL + "model.json";
+        let metadataURL = modelURL + "metadata.json";
         
         // 遊戲變數
         let model, webcam, maxPredictions;
@@ -1267,8 +1313,22 @@
         transitionScreen.appendChild(transitionContent);
         document.body.appendChild(transitionScreen);
         
+        // 獲取自定義模型輸入欄位
+        const customModelUrl = document.getElementById('custom-model-url');
+        
         // 封面頁面開始遊戲按鈕事件 - 添加過場效果
         startGameButton.addEventListener("click", async () => {
+            // 獲取輸入欄位中的模型URL
+            const customUrl = customModelUrl.value.trim();
+            if (customUrl) {
+                // 更新模型URL
+                const updatedModelURL = customUrl.endsWith('/') ? customUrl : customUrl + '/';
+                // 更新全局變量
+                modelURL = updatedModelURL;
+                modelJSONURL = modelURL + "model.json";
+                metadataURL = modelURL + "metadata.json";
+            }
+            
             // 播放背景音樂
             try {
                 await backgroundMusic.play();
@@ -1280,6 +1340,7 @@
             // 顯示過場動畫
             transitionScreen.style.opacity = "1";
             transitionScreen.style.pointerEvents = "auto";
+            transitionScreen.style.display = "flex";
             
             // 延遲隱藏封面頁面以製造轉場效果
             setTimeout(() => {
@@ -1289,13 +1350,36 @@
             // 自動啟動遊戲和相機
             if (!isModelLoading) {
                 isModelLoading = true;
-                await init();
-                
-                // 載入完成後，淡出過場動畫
-                transitionScreen.style.opacity = "0";
-                transitionScreen.style.pointerEvents = "none";
-                
-                isModelLoading = false;
+                try {
+                    await init();
+                } catch (error) {
+                    console.error("模型載入錯誤:", error);
+                    showError(true, "無法載入指定的模型: " + error.message + "。請確保URL正確且包含有效的Teachable Machine模型。");
+                    
+                    // 嘗試回退到默認模型
+                    showError(true, "自定義模型載入失敗，正在嘗試使用默認模型...");
+                    
+                    // 重置為默認模型
+                    modelURL = "https://teachablemachine.withgoogle.com/models/xrzPvPeMK/";
+                    modelJSONURL = modelURL + "model.json";
+                    metadataURL = modelURL + "metadata.json";
+                    
+                    // 再次嘗試初始化
+                    setTimeout(async () => {
+                        try {
+                            await init();
+                        } catch (fallbackError) {
+                            console.error("默認模型也無法載入:", fallbackError);
+                            showError(true, "無法載入任何模型。請檢查您的網絡連接或刷新頁面重試。");
+                        }
+                    }, 1000);
+                } finally {
+                    // 載入完成後，淡出過場動畫
+                    transitionScreen.style.opacity = "0";
+                    transitionScreen.style.pointerEvents = "none";
+                    
+                    isModelLoading = false;
+                }
             }
         });
         
