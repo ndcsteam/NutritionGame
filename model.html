@@ -521,136 +521,187 @@
         </div>
     </div>
 
-    <!-- 遊戲封面頁面 -->
-    <div id="cover-page" class="fixed inset-0 flex flex-col items-center justify-center z-50 bg-gradient-to-b from-primary-100 to-primary-200 dark:from-slate-800 dark:to-slate-900">
-        <div class="max-w-3xl w-full px-6 py-12 text-center">
-            <!-- 遊戲標題 -->
-            <div class="mb-8">
-                <div class="flex items-center justify-center space-x-4 mb-4">
-                    <i class="fas fa-apple-alt text-red-500 text-5xl animate-bounce-slow"></i>
-                    <h1 class="text-6xl font-extrabold text-primary-600 dark:text-primary-400 tracking-wide game-title">小小營養醫生</h1>
-                    <i class="fas fa-carrot text-orange-500 text-5xl animate-bounce-slow" style="animation-delay: 0.3s"></i>
-                </div>
-                <p class="text-2xl font-medium text-primary-700 dark:text-primary-300 italic">用美味食物打敗疾病，當個營養英雄！</p>
-            </div>
-            
-            <!-- 遊戲說明 -->
-            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 mb-10 max-w-2xl mx-auto border-2 border-primary-300 dark:border-primary-700">
-                <h2 class="text-3xl font-bold text-primary-600 dark:text-primary-400 mb-4 card-title">遊戲說明</h2>
-                
-                <div class="space-y-4 text-left">
-                    <div class="flex items-start">
-                        <div class="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-full mr-3 flex-shrink-0">
-                            <i class="fas fa-user-md text-primary-600 dark:text-primary-400 text-xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-xl text-slate-800 dark:text-slate-200 mb-1">成為營養醫生</h3>
-                            <p class="text-slate-600 dark:text-slate-400">幫助生病的患者找出適合的食物，治療他們的營養缺乏症！</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-start">
-                        <div class="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-full mr-3 flex-shrink-0">
-                            <i class="fas fa-camera text-primary-600 dark:text-primary-400 text-xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-xl text-slate-800 dark:text-slate-200 mb-1">使用相機</h3>
-                            <p class="text-slate-600 dark:text-slate-400">對著相機展示食物，我們的智能系統會識別你提供的食物！</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-start">
-                        <div class="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-full mr-3 flex-shrink-0">
-                            <i class="fas fa-star text-primary-600 dark:text-primary-400 text-xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-xl text-slate-800 dark:text-slate-200 mb-1">獲得分數</h3>
-                            <p class="text-slate-600 dark:text-slate-400">提供正確的食物獲得10分！在60秒內達到50分即可勝利！</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mt-8 flex flex-wrap justify-center gap-5">
-                    <div class="food-card p-4 bg-primary-50 dark:bg-primary-800/30 rounded-xl flex flex-col items-center border border-primary-200 dark:border-primary-700">
-                        <div class="text-4xl mb-1">🍎</div>
-                        <div class="text-sm font-medium">蘋果</div>
-                    </div>
-                    <div class="food-card p-4 bg-primary-50 dark:bg-primary-800/30 rounded-xl flex flex-col items-center border border-primary-200 dark:border-primary-700">
-                        <div class="text-4xl mb-1">🍊</div>
-                        <div class="text-sm font-medium">橙子</div>
-                    </div>
-                    <div class="food-card p-4 bg-primary-50 dark:bg-primary-800/30 rounded-xl flex flex-col items-center border border-primary-200 dark:border-primary-700">
-                        <div class="text-4xl mb-1">🥚</div>
-                        <div class="text-sm font-medium">雞蛋</div>
-                    </div>
-                    <div class="food-card p-4 bg-primary-50 dark:bg-primary-800/30 rounded-xl flex flex-col items-center border border-primary-200 dark:border-primary-700">
-                        <div class="text-4xl mb-1">🥕</div>
-                        <div class="text-sm font-medium">胡蘿蔔</div>
-                    </div>
-                </div>
-                
-                <!-- 自定義模型設置部分 -->
-                <div class="mt-8 pt-6 border-t-2 border-primary-100 dark:border-primary-800">
-                    <div class="flex items-start">
-                        <div class="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-full mr-3 flex-shrink-0">
-                            <i class="fas fa-cogs text-primary-600 dark:text-primary-400 text-xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-xl text-slate-800 dark:text-slate-200 mb-1">自定義模型</h3>
-                            <p class="text-slate-600 dark:text-slate-400 mb-4">您可以輸入自己訓練的 Teachable Machine 影像模型來進行遊戲！</p>
-                            
-                            <!-- 移除開關按鈕，直接顯示輸入欄位 -->
-                            <div id="custom-model-fields" class="space-y-4">
-                                <div>
-                                    <label for="custom-model-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Teachable Machine 模型 URL
-                                    </label>
-                                    <input 
-                                        type="text" 
-                                        id="custom-model-url" 
-                                        placeholder="例如: https://teachablemachine.withgoogle.com/models/YOUR_MODEL_ID/" 
-                                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-slate-700 dark:text-white"
-                                        value="https://teachablemachine.withgoogle.com/models/xrzPvPeMK/"
-                                    >
-                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                        <i class="fas fa-info-circle mr-1"></i>
-                                        請確保您的模型包含: 蘋果、橙子、雞蛋、胡蘿蔔的分類
-                                    </p>
-                                </div>
-                                
-                                <div class="bg-yellow-50 dark:bg-yellow-900/30 p-3 rounded-md text-yellow-800 dark:text-yellow-200 text-sm">
-                                    <i class="fas fa-exclamation-triangle mr-1"></i>
-                                    <strong>提示:</strong> 您需要使用 Teachable Machine 訓練包含相同食物種類的模型，否則遊戲邏輯可能無法正常運作。
-                                </div>
-                            </div>
-                            
-                            <!-- 添加創建自己模型的鏈接 -->
-                            <div class="mt-4 text-sm text-primary-700 dark:text-primary-400">
-                                <a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center hover:underline">
-                                    <i class="fas fa-external-link-alt mr-1"></i>
-                                    前往 Teachable Machine 創建自己的模型
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 開始遊戲按鈕 -->
-            <button id="start-game-button" class="mt-4 bg-primary-500 hover:bg-primary-600 text-white text-2xl font-bold py-5 px-12 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500 focus:ring-opacity-50 transition btn-3d shadow-xl">
-                <i class="fas fa-play-circle mr-2"></i>開始遊戲
-            </button>
-            
-            <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">
-                <i class="fas fa-volume-up mr-1"></i>請確保已打開音效以獲得最佳體驗
-            </p>
-        </div>
-        
-        <!-- 裝飾性食物圖標 -->
+    <!-- 遊戲封面頁面 - 分成兩個步驟 -->
+    <div id="cover-container" class="fixed inset-0 z-50 bg-gradient-to-b from-primary-100 to-primary-200 dark:from-slate-800 dark:to-slate-900">
+        <!-- 裝飾性食物圖標 (兩個頁面共用的背景裝飾) -->
         <div class="absolute bottom-10 left-10 food-icon text-6xl animate-float">🍎</div>
         <div class="absolute top-10 right-10 food-icon text-6xl animate-float" style="animation-delay: 0.5s;">🥚</div>
         <div class="absolute bottom-20 right-20 food-icon text-6xl animate-float" style="animation-delay: 1s;">🍊</div>
         <div class="absolute top-20 left-20 food-icon text-6xl animate-float" style="animation-delay: 1.5s;">🥕</div>
+        
+        <!-- 第一頁: 自定義模型設置頁面 -->
+        <div id="model-setup-page" class="flex flex-col items-center justify-center min-h-screen px-6 py-12">
+            <div class="max-w-3xl w-full text-center">
+                <!-- 遊戲標題 -->
+                <div class="mb-8">
+                    <div class="flex items-center justify-center space-x-4 mb-4">
+                        <i class="fas fa-apple-alt text-red-500 text-5xl animate-bounce-slow"></i>
+                        <h1 class="text-6xl font-extrabold text-primary-600 dark:text-primary-400 tracking-wide game-title">小小營養醫生</h1>
+                        <i class="fas fa-carrot text-orange-500 text-5xl animate-bounce-slow" style="animation-delay: 0.3s"></i>
+                    </div>
+                    <p class="text-2xl font-medium text-primary-700 dark:text-primary-300 italic">用美味食物打敗疾病，當個營養英雄！</p>
+                </div>
+                
+                <!-- 步驟指示器 -->
+                <div class="flex items-center justify-center mb-8">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-full bg-primary-500 text-white flex items-center justify-center font-bold">1</div>
+                        <div class="h-1 w-16 bg-primary-500"></div>
+                        <div class="w-8 h-8 rounded-full bg-primary-200 dark:bg-primary-800 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold">2</div>
+                    </div>
+                </div>
+                
+                <!-- 自定義模型卡片 -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 mb-10 max-w-2xl mx-auto border-2 border-primary-300 dark:border-primary-700">
+                    <h2 class="text-3xl font-bold text-primary-600 dark:text-primary-400 mb-6 card-title">設置您的模型</h2>
+                    
+                    <div class="space-y-6">
+                        <div class="flex items-start">
+                            <div class="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-full mr-3 flex-shrink-0">
+                                <i class="fas fa-cogs text-primary-600 dark:text-primary-400 text-xl"></i>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="font-bold text-xl text-slate-800 dark:text-slate-200 mb-1">自定義影像模型</h3>
+                                <p class="text-slate-600 dark:text-slate-400 mb-4">您可以輸入自己訓練的 Teachable Machine 模型來進行遊戲！</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 模型輸入區域 -->
+                        <div class="space-y-4">
+                            <div>
+                                <label for="custom-model-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 text-left">
+                                    Teachable Machine 模型 URL
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="custom-model-url" 
+                                    placeholder="例如: https://teachablemachine.withgoogle.com/models/YOUR_MODEL_ID/" 
+                                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-slate-700 dark:text-white"
+                                    value="https://teachablemachine.withgoogle.com/models/xrzPvPeMK/"
+                                >
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 text-left">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    請確保您的模型包含: 蘋果、橙子、雞蛋、胡蘿蔔的分類
+                                </p>
+                            </div>
+                            
+                            <div class="bg-yellow-50 dark:bg-yellow-900/30 p-3 rounded-md text-yellow-800 dark:text-yellow-200 text-sm">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                <strong>提示:</strong> 您需要使用 Teachable Machine 訓練包含相同食物種類的模型，否則遊戲邏輯可能無法正常運作。
+                            </div>
+                        </div>
+                        
+                        <!-- 創建自己模型的鏈接 -->
+                        <div class="text-sm text-primary-700 dark:text-primary-400 text-left">
+                            <a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center hover:underline">
+                                <i class="fas fa-external-link-alt mr-1"></i>
+                                前往 Teachable Machine 創建自己的模型
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 頁面導航按鈕 -->
+                <button id="to-instruction-button" class="bg-primary-500 hover:bg-primary-600 text-white text-xl font-bold py-4 px-10 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500 focus:ring-opacity-50 transition btn-3d shadow-lg">
+                    <i class="fas fa-arrow-right mr-2"></i>下一步：查看遊戲說明
+                </button>
+            </div>
+        </div>
+        
+        <!-- 第二頁: 遊戲說明頁面 -->
+        <div id="game-instruction-page" class="hidden flex flex-col items-center justify-center min-h-screen px-6 py-12">
+            <div class="max-w-3xl w-full text-center">
+                <!-- 遊戲標題 -->
+                <div class="mb-8">
+                    <div class="flex items-center justify-center space-x-4 mb-4">
+                        <i class="fas fa-apple-alt text-red-500 text-5xl animate-bounce-slow"></i>
+                        <h1 class="text-6xl font-extrabold text-primary-600 dark:text-primary-400 tracking-wide game-title">小小營養醫生</h1>
+                        <i class="fas fa-carrot text-orange-500 text-5xl animate-bounce-slow" style="animation-delay: 0.3s"></i>
+                    </div>
+                    <p class="text-2xl font-medium text-primary-700 dark:text-primary-300 italic">用美味食物打敗疾病，當個營養英雄！</p>
+                </div>
+                
+                <!-- 步驟指示器 -->
+                <div class="flex items-center justify-center mb-8">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-full bg-primary-200 dark:bg-primary-800 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold">1</div>
+                        <div class="h-1 w-16 bg-primary-500"></div>
+                        <div class="w-8 h-8 rounded-full bg-primary-500 text-white flex items-center justify-center font-bold">2</div>
+                    </div>
+                </div>
+                
+                <!-- 遊戲說明卡片 -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 mb-10 max-w-2xl mx-auto border-2 border-primary-300 dark:border-primary-700">
+                    <h2 class="text-3xl font-bold text-primary-600 dark:text-primary-400 mb-6 card-title">遊戲說明</h2>
+                    
+                    <div class="space-y-6 text-left">
+                        <div class="flex items-start">
+                            <div class="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-full mr-3 flex-shrink-0">
+                                <i class="fas fa-user-md text-primary-600 dark:text-primary-400 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-xl text-slate-800 dark:text-slate-200 mb-1">成為營養醫生</h3>
+                                <p class="text-slate-600 dark:text-slate-400">幫助生病的患者找出適合的食物，治療他們的營養缺乏症！</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-full mr-3 flex-shrink-0">
+                                <i class="fas fa-camera text-primary-600 dark:text-primary-400 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-xl text-slate-800 dark:text-slate-200 mb-1">使用相機</h3>
+                                <p class="text-slate-600 dark:text-slate-400">對著相機展示食物，我們的智能系統會識別你提供的食物！</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-full mr-3 flex-shrink-0">
+                                <i class="fas fa-star text-primary-600 dark:text-primary-400 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-xl text-slate-800 dark:text-slate-200 mb-1">獲得分數</h3>
+                                <p class="text-slate-600 dark:text-slate-400">提供正確的食物獲得10分！在60秒內達到50分即可勝利！</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 flex flex-wrap justify-center gap-5">
+                        <div class="food-card p-4 bg-primary-50 dark:bg-primary-800/30 rounded-xl flex flex-col items-center border border-primary-200 dark:border-primary-700">
+                            <div class="text-4xl mb-1">🍎</div>
+                            <div class="text-sm font-medium">蘋果</div>
+                        </div>
+                        <div class="food-card p-4 bg-primary-50 dark:bg-primary-800/30 rounded-xl flex flex-col items-center border border-primary-200 dark:border-primary-700">
+                            <div class="text-4xl mb-1">🍊</div>
+                            <div class="text-sm font-medium">橙子</div>
+                        </div>
+                        <div class="food-card p-4 bg-primary-50 dark:bg-primary-800/30 rounded-xl flex flex-col items-center border border-primary-200 dark:border-primary-700">
+                            <div class="text-4xl mb-1">🥚</div>
+                            <div class="text-sm font-medium">雞蛋</div>
+                        </div>
+                        <div class="food-card p-4 bg-primary-50 dark:bg-primary-800/30 rounded-xl flex flex-col items-center border border-primary-200 dark:border-primary-700">
+                            <div class="text-4xl mb-1">🥕</div>
+                            <div class="text-sm font-medium">胡蘿蔔</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 頁面導航按鈕 -->
+                <div class="flex justify-center gap-4">
+                    <button id="to-model-button" class="bg-slate-500 hover:bg-slate-600 text-white text-xl font-bold py-4 px-10 rounded-full focus:outline-none focus:ring-4 focus:ring-slate-500 focus:ring-opacity-50 transition btn-3d shadow-lg">
+                        <i class="fas fa-arrow-left mr-2"></i>返回自定義模型
+                    </button>
+                    
+                    <button id="start-game-button" class="bg-primary-500 hover:bg-primary-600 text-white text-xl font-bold py-4 px-10 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500 focus:ring-opacity-50 transition btn-3d shadow-lg">
+                        <i class="fas fa-play-circle mr-2"></i>開始遊戲
+                    </button>
+                </div>
+                
+                <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">
+                    <i class="fas fa-volume-up mr-1"></i>請確保已打開音效以獲得最佳體驗
+                </p>
+            </div>
+        </div>
     </div>
     
     <!-- 遊戲結束對話框 -->
@@ -697,9 +748,9 @@
         const backgroundMusic = document.getElementById('background-music');
         
         // Teachable Machine 模型 URL
-        const modelURL = "https://teachablemachine.withgoogle.com/models/xrzPvPeMK/";
-        const modelJSONURL = modelURL + "model.json";
-        const metadataURL = modelURL + "metadata.json";
+        let modelURL = "https://teachablemachine.withgoogle.com/models/xrzPvPeMK/";
+        let modelJSONURL = modelURL + "model.json";
+        let metadataURL = modelURL + "metadata.json";
         
         // 遊戲變數
         let model, webcam, maxPredictions;
@@ -831,8 +882,12 @@
             }
         ];
         
-        // DOM 元素
-        const coverPage = document.getElementById("cover-page");
+        // DOM 元素 - 新的封面頁面元素
+        const coverContainer = document.getElementById("cover-container");
+        const modelSetupPage = document.getElementById("model-setup-page");
+        const gameInstructionPage = document.getElementById("game-instruction-page");
+        const toInstructionButton = document.getElementById("to-instruction-button");
+        const toModelButton = document.getElementById("to-model-button");
         const startGameButton = document.getElementById("start-game-button");
         const webcamPlaceholder = document.getElementById("webcam-placeholder");
         const webcamWrapper = document.getElementById("webcam-wrapper");
@@ -1316,7 +1371,18 @@
         // 獲取自定義模型輸入欄位
         const customModelUrl = document.getElementById('custom-model-url');
         
-        // 封面頁面開始遊戲按鈕事件 - 添加過場效果
+        // 兩個頁面之間的導航功能
+        toInstructionButton.addEventListener("click", () => {
+            modelSetupPage.classList.add('hidden');
+            gameInstructionPage.classList.remove('hidden');
+        });
+        
+        toModelButton.addEventListener("click", () => {
+            gameInstructionPage.classList.add('hidden');
+            modelSetupPage.classList.remove('hidden');
+        });
+        
+        // 開始遊戲按鈕事件 - 添加過場效果
         startGameButton.addEventListener("click", async () => {
             // 獲取輸入欄位中的模型URL
             const customUrl = customModelUrl.value.trim();
@@ -1344,7 +1410,7 @@
             
             // 延遲隱藏封面頁面以製造轉場效果
             setTimeout(() => {
-                coverPage.classList.add("hidden");
+                coverContainer.classList.add("hidden");
             }, 500);
             
             // 自動啟動遊戲和相機
